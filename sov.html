@@ -1,5 +1,4 @@
-<!DOCTYPE html> 
-//3
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -20,15 +19,16 @@
             justify-content: center;
             align-items: flex-start;
             min-height: 100vh;
-            padding: 20px 16px calc(80px + env(safe-area-inset-bottom, 0px));
+            min-height: 100dvh;
+            padding: 0 0 calc(64px + env(safe-area-inset-bottom, 0px));
             font-family: "Rajdhani", sans-serif;
             font-size: 14px;
             line-height: 1.45;
             color: #fff;
             -webkit-text-size-adjust: 100%;
         }
-        .sl { width: 100%; max-width: 400px; padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
-        .win { background: #0b1d3a; border: 1px solid #1e4a8a; border-radius: 3px; overflow: hidden; position: relative; margin-bottom: 16px; }
+        .sl { width: 100%; max-width: 400px; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
+        .win { background: #0b1d3a; border: 1px solid #1e4a8a; border-radius: 0; overflow: hidden; position: relative; flex: 1; display: flex; flex-direction: column; }
         .corn { position: absolute; width: 24px; height: 24px; opacity: 0.5; pointer-events: none; z-index: 1; }
         .corn svg { width: 100%; height: 100%; }
         .c-tl { top: 3px; left: 3px; }
@@ -53,7 +53,7 @@
         .buff-flair-text { display: flex; flex-direction: column; }
         .buff-flair-name { font-size: 11px; font-weight: 700; letter-spacing: 1px; }
         .buff-flair-sub  { font-size: 9px; letter-spacing: 1px; margin-top: 1px; opacity: 0.7; }
-        .bod { padding: 16px 16px 12px; }
+        .bod { padding: 16px 16px 12px; flex: 1; overflow-y: auto; }
         .rank-center { display: flex; flex-direction: column; align-items: center; margin-bottom: 14px; }
         .rank-ring-wrap { position: relative; width: 100px; height: 100px; margin-bottom: 6px; }
         .rank-ring-wrap canvas { position: absolute; top: 0; left: 0; }
