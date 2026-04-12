@@ -1,0 +1,3068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>ARCHIVE</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg:       #060d19;
+    --panel:    #0b1a2e;
+    --card:     #0d1f38;
+    --border:   #162d4f;
+    --border2:  #1e4070;
+    --teal:     #4ddde8;
+    --green:    #4de894;
+    --gold:     #f0c040;
+    --red:      #e84d4d;
+    --orange:   #e87a4d;
+    --purple:   #b44de8;
+    --blue:     #4a9fe8;
+    --muted:    #3a6a9a;
+    --text:     #ddeeff;
+    --text2:    #7ab0d4;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Rajdhani", sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
+    overflow-x: hidden;
+}
+
+/* ── Header ── */
+.hdr {
+    width: 100%;
+    max-width: 480px;
+    padding: 16px 16px 10px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+}
+.hdr-title {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 5px;
+    color: var(--text);
+}
+.hdr-count {
+    font-family: "Share Tech Mono", monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+}
+.hdr-filters {
+    margin-left: auto;
+    display: flex;
+    gap: 6px;
+}
+.filter-btn {
+    font-family: "Rajdhani", sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 3px 8px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+}
+.filter-btn.active { border-color: var(--teal); color: var(--teal); }
+
+/* ── Feed ── */
+.feed {
+    width: 100%;
+    max-width: 480px;
+    padding: 0 16px;
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Stack layout — idx 0 is active center card, idx 1 peeks below, idx 2+ hidden below */
+.deck-card-wrap {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    transition: transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.3s ease;
+    will-change: transform;
+}
+/* idx 0 = active card — centered in feed */
+.deck-card-wrap[data-deck-idx="0"] { top: 50%; transform: translateY(-50%); z-index: 30; }
+/* idx 1 = peeks from above — slightly visible at top */
+.deck-card-wrap[data-deck-idx="1"] { bottom: 100%; margin-bottom: -48px; z-index: 20; opacity: 0.45; pointer-events: none; }
+/* idx 2 = peeks from below — slightly visible at bottom */
+.deck-card-wrap[data-deck-idx="2"] { top: 100%; margin-top: -48px; z-index: 10; opacity: 0.25; pointer-events: none; }
+
+/* Deck transition animations */
+@keyframes snapBack   { from{transform:translateY(var(--drag-y,0px));opacity:1} to{transform:translateY(0);opacity:1} }
+@keyframes dismissUp  { from{transform:translateY(var(--drag-y,0px));opacity:1} to{transform:translateY(-110%);opacity:0} }
+@keyframes enterBelow { from{transform:translateY(80px);opacity:0} to{transform:translateY(0);opacity:1} }
+.card-snapping  { animation: snapBack 0.25s cubic-bezier(0.25,0.46,0.45,0.94) forwards; }
+.card-dismissing{ animation: dismissUp 0.28s cubic-bezier(0.4,0,0.6,1) forwards; pointer-events:none; }
+.card-entering  { animation: enterBelow 0.32s cubic-bezier(0.25,0.46,0.45,0.94) forwards; }
+
+/* ── Entry card ── */
+.entry-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+    animation: cardIn 0.25s ease forwards;
+    min-height: calc(90dvh - 180px);
+    display: flex;
+    flex-direction: column;
+}
+@keyframes cardIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.entry-card:hover { border-color: var(--border2); }
+.entry-card.pinned { border-color: rgba(240,192,64,0.4); }
+.entry-card.resolved { opacity: 0.4; }
+
+.entry-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 16px 10px;
+}
+.entry-type-tag {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 2px 6px;
+    border: 1px solid;
+    border-radius: 2px;
+    flex-shrink: 0;
+    font-family: "Share Tech Mono", monospace;
+}
+.entry-stat-tag {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 2px 5px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--muted);
+    flex-shrink: 0;
+}
+.entry-time {
+    font-family: "Share Tech Mono", monospace;
+    font-size: 9px;
+    color: var(--muted);
+    margin-left: auto;
+    flex-shrink: 0;
+}
+.entry-pin { font-size: 10px; color: var(--gold); }
+
+.entry-content {
+    padding: 0 16px 16px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+    flex: 1;
+}
+
+/* Deadline bar */
+.entry-deadline {
+    padding: 6px 10px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: "Share Tech Mono", monospace;
+    font-size: 10px;
+}
+.deadline-timer { font-weight: 700; }
+.deadline-timer.urgent { color: var(--red); }
+.deadline-timer.soon   { color: var(--orange); }
+.deadline-timer.ok     { color: var(--muted); }
+.deadline-stakes { font-size: 9px; letter-spacing: 1px; }
+
+/* Versions */
+.entry-versions {
+    padding: 6px 10px;
+    border-top: 1px solid var(--border);
+    font-size: 10px;
+    color: var(--muted);
+    cursor: pointer;
+    letter-spacing: 1px;
+}
+
+/* Entry actions */
+.entry-actions {
+    display: flex;
+    border-top: 1px solid var(--border);
+    margin-top: auto;
+}
+.act-btn {
+    flex: 1;
+    font-family: "Rajdhani", sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 7px 4px;
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+}
+.act-btn:last-child { border-right: none; }
+.act-btn:hover { color: var(--teal); background: rgba(77,221,232,0.05); }
+.act-btn.resolve:hover { color: var(--green); }
+.act-btn.pin-btn:hover { color: var(--gold); }
+.act-btn.snooze:hover  { color: var(--purple); }
+.act-btn.delete:hover  { color: var(--red); }
+
+/* Follow-up thread */
+.entry-children {
+    border-top: 1px solid var(--border);
+    background: rgba(0,0,0,0.15);
+}
+.child-entry {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.5;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+}
+.child-entry:last-child { border-bottom: none; }
+.child-dot { color: var(--muted); flex-shrink: 0; margin-top: 2px; }
+
+/* Input selector sheet */
+.selector-sheet-bg {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0);
+    pointer-events: none;
+    z-index: 2000;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.selector-sheet-bg.open {
+    background: rgba(0,0,0,0.75);
+    pointer-events: all;
+}
+.selector-sheet {
+    background: var(--panel);
+    border: 1px solid var(--border2);
+    border-radius: 3px;
+    padding: 16px;
+    width: 100%;
+    max-width: 340px;
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+}
+.selector-sheet-bg.open .selector-sheet {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: all;
+}
+.selector-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--muted);
+    margin-bottom: 12px;
+}
+.selector-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+.selector-opt {
+    font-family: "Rajdhani", sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 8px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text2);
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+    text-align: left;
+}
+.selector-opt:hover { border-color: var(--teal); color: var(--teal); }
+.selector-skip {
+    width: 100%;
+    margin-top: 8px;
+    font-family: "Rajdhani", sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 8px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+}
+.selector-skip:hover { color: var(--text2); }
+
+/* ── Capture bar ── */
+.capture-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0; right: 0;
+    background: var(--panel);
+    border-top: 1px solid var(--border2);
+    padding: 10px 12px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 100%;
+}
+.capture-row1 {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+}
+.capture-input {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border2);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: "Rajdhani", sans-serif;
+    font-size: 14px;
+    padding: 9px 10px;
+    resize: none;
+    min-height: 40px;
+    max-height: 120px;
+    overflow-y: auto;
+    line-height: 1.4;
+    outline: none;
+    transition: border-color 0.15s;
+}
+.capture-input::placeholder { color: var(--muted); }
+.capture-input:focus { border-color: var(--teal); }
+.capture-send {
+    width: 40px;
+    height: 40px;
+    background: var(--teal);
+    border: none;
+    border-radius: 3px;
+    color: var(--bg);
+    font-size: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    font-weight: 700;
+}
+.capture-send:hover { background: #6ef0f8; }
+.capture-send:active { transform: scale(0.95); }
+.capture-send:disabled { background: var(--border); color: var(--muted); cursor: default; }
+
+.capture-row2 {
+    display: flex;
+    gap: 6px;
+}
+.capture-select {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--muted);
+    font-family: "Share Tech Mono", monospace;
+    font-size: 10px;
+    padding: 5px 6px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    appearance: none;
+    -webkit-appearance: none;
+    text-align: center;
+}
+.capture-select:focus { border-color: var(--teal); color: var(--text); }
+.capture-select.has-value { color: var(--text); border-color: var(--border2); }
+
+/* Empty state */
+.empty-state {
+    padding: 48px 16px;
+    text-align: center;
+    color: var(--muted);
+}
+.empty-state p { font-size: 13px; letter-spacing: 1px; line-height: 2; }
+
+/* Snooze modal */
+.snooze-modal-bg {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+    padding: 20px;
+}
+.snooze-modal-bg.open { display: flex; }
+.snooze-modal {
+    background: var(--panel);
+    border: 1px solid var(--border2);
+    border-radius: 3px;
+    padding: 16px;
+    width: 100%;
+    max-width: 300px;
+}
+.snooze-title { font-size: 10px; letter-spacing: 3px; color: var(--muted); margin-bottom: 12px; }
+.snooze-opts { display: flex; flex-direction: column; gap: 6px; }
+.snooze-opt {
+    font-family: "Rajdhani", sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text2);
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+    text-align: left;
+}
+.snooze-opt:hover { border-color: var(--purple); color: var(--purple); }
+
+/* Follow-up input */
+.followup-area {
+    border-top: 1px solid var(--border);
+    padding: 8px 10px;
+    display: none;
+    gap: 6px;
+}
+.followup-area.open { display: flex; }
+.followup-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border2);
+    color: var(--text);
+    font-family: "Rajdhani", sans-serif;
+    font-size: 13px;
+    padding: 4px 0;
+    outline: none;
+}
+.followup-input::placeholder { color: var(--muted); }
+.followup-send {
+    font-family: "Rajdhani", sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    background: transparent;
+    border: 1px solid var(--teal);
+    color: var(--teal);
+    cursor: pointer;
+    border-radius: 2px;
+}
+
+/* ── PATTERN card ── */
+.pattern-card {
+    background: var(--card);
+    border: 1px solid rgba(180,77,232,0.35);
+    border-radius: 3px;
+    overflow: hidden;
+    animation: cardIn 0.25s ease forwards;
+    min-height: calc(90dvh - 220px);
+    display: flex;
+    flex-direction: column;
+}
+.pattern-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 10px 6px;
+}
+.pattern-label { font-size: 9px; font-weight: 700; letter-spacing: 2px; color: var(--purple); font-family: "Share Tech Mono", monospace; }
+.pattern-body { padding: 12px 16px 16px; flex: 1; }
+.pattern-tag { font-family: "Share Tech Mono", monospace; font-size: 12px; color: var(--purple); font-weight: 700; margin-bottom: 6px; }
+.pattern-count { font-size: 11px; color: var(--text2); margin-bottom: 8px; }
+.pattern-samples { display: flex; flex-direction: column; gap: 4px; }
+.pattern-sample { font-size: 11px; color: var(--muted); padding: 4px 8px; border-left: 2px solid rgba(180,77,232,0.3); }
+.pattern-actions { display: flex; border-top: 1px solid var(--border); }
+.pattern-dismiss { flex: 1; font-family: "Rajdhani", sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 2px; padding: 8px; background: transparent; border: none; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+.pattern-dismiss:hover { color: var(--red); }
+
+/* ── REFLECTION card ── */
+.reflection-card {
+    background: var(--card);
+    border: 1px solid rgba(240,192,64,0.3);
+    border-radius: 3px;
+    overflow: hidden;
+    animation: cardIn 0.25s ease forwards;
+    min-height: calc(90dvh - 220px);
+    display: flex;
+    flex-direction: column;
+}
+.reflection-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px 6px; }
+.reflection-label { font-size: 9px; font-weight: 700; letter-spacing: 2px; color: var(--gold); font-family: "Share Tech Mono", monospace; }
+.reflection-ago { font-family: "Share Tech Mono", monospace; font-size: 9px; color: var(--muted); }
+.reflection-quote { padding: 12px 16px 16px; font-size: 14px; color: var(--text); line-height: 1.65; border-bottom: 1px solid var(--border); font-style: italic; flex: 1; }
+.reflection-prompt { padding: 8px 10px; font-size: 11px; color: var(--text2); letter-spacing: 0.5px; }
+.reflection-actions { display: flex; border-top: 1px solid var(--border); }
+.reflection-btn { flex: 1; font-family: "Rajdhani", sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 8px 4px; background: transparent; border: none; border-right: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: all 0.15s; text-align: center; }
+.reflection-btn:last-child { border-right: none; }
+.reflection-btn.yes:hover  { color: var(--green); }
+.reflection-btn.no:hover   { color: var(--red); }
+.reflection-btn.note:hover { color: var(--teal); }
+.reflection-btn.skip:hover { color: var(--muted); opacity: 0.6; }
+.reflection-note-area { padding: 8px 10px; display: none; gap: 8px; border-top: 1px solid var(--border); }
+.reflection-note-area.open { display: flex; }
+.reflection-note-input { flex: 1; background: transparent; border: none; border-bottom: 1px solid var(--border2); color: var(--text); font-family: "Rajdhani", sans-serif; font-size: 13px; padding: 3px 0; outline: none; }
+.reflection-note-send { font-family: "Rajdhani", sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 3px 10px; background: transparent; border: 1px solid var(--teal); color: var(--teal); cursor: pointer; border-radius: 2px; }
+
+/* ── TIME CAPSULE card ── */
+.capsule-card {
+    background: var(--card);
+    border: 1px solid rgba(180,77,232,0.3);
+    border-radius: 3px;
+    overflow: hidden;
+    animation: cardIn 0.25s ease forwards;
+    min-height: calc(90dvh - 180px);
+    display: flex;
+    flex-direction: column;
+}
+.capsule-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); }
+.capsule-label  { font-size:9px; font-weight:700; letter-spacing:2px; color:var(--purple); font-family:"Share Tech Mono",monospace; }
+.capsule-skip   { font-size:9px; font-weight:700; letter-spacing:1px; padding:2px 8px; background:transparent; border:1px solid var(--border); color:var(--muted); cursor:pointer; border-radius:2px; font-family:"Rajdhani",sans-serif; transition:all 0.15s; }
+.capsule-skip:hover { border-color:var(--red); color:var(--red); }
+.capsule-prompt { padding:20px 16px 16px; font-size:16px; font-weight:600; color:var(--text); line-height:1.55; flex:1; }
+.capsule-hint   { padding:0 16px 12px; font-size:10px; color:var(--muted); letter-spacing:0.5px; font-style:italic; }
+.capsule-input-row { display:flex; gap:8px; padding:10px 16px; border-top:1px solid var(--border); background:rgba(0,0,0,0.15); }
+.capsule-textarea { flex:1; background:transparent; border:none; border-bottom:1px solid rgba(180,77,232,0.4); color:var(--text); font-family:"Rajdhani",sans-serif; font-size:14px; line-height:1.5; padding:4px 0; outline:none; resize:none; min-height:36px; max-height:100px; overflow-y:auto; }
+.capsule-textarea::placeholder { color:var(--muted); }
+.capsule-send { width:36px; height:36px; background:var(--purple); border:none; border-radius:3px; color:#fff; font-size:16px; font-weight:700; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all 0.15s; align-self:flex-end; }
+.capsule-send:hover { background:#c96ff0; }
+.capsule-send:disabled { background:var(--border); color:var(--muted); cursor:default; }
+
+/* Sealed capsule in feed */
+.capsule-sealed { background:rgba(180,77,232,0.06); border:1px solid rgba(180,77,232,0.25); border-radius:3px; padding:14px 16px; min-height:120px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:8px; text-align:center; }
+.capsule-sealed-icon  { font-size:28px; }
+.capsule-sealed-label { font-size:9px; font-weight:700; letter-spacing:2px; color:var(--purple); font-family:"Share Tech Mono",monospace; }
+.capsule-sealed-date  { font-size:11px; color:var(--muted); }
+
+/* Revealed capsule */
+.capsule-reveal-banner { padding:8px 16px; background:rgba(180,77,232,0.12); border-bottom:1px solid rgba(180,77,232,0.25); font-size:10px; font-weight:700; letter-spacing:2px; color:var(--purple); font-family:"Share Tech Mono",monospace; }
+
+/* ── PREDICTION card ── */
+.prediction-card {
+    background: var(--card);
+    border: 1px solid rgba(240,192,64,0.3);
+    border-radius: 3px;
+    overflow: hidden;
+    animation: cardIn 0.25s ease forwards;
+    min-height: calc(90dvh - 180px);
+    display: flex;
+    flex-direction: column;
+}
+.prediction-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); }
+.prediction-label  { font-size:9px; font-weight:700; letter-spacing:2px; color:var(--gold); font-family:"Share Tech Mono",monospace; }
+.prediction-skip   { font-size:9px; font-weight:700; letter-spacing:1px; padding:2px 8px; background:transparent; border:1px solid var(--border); color:var(--muted); cursor:pointer; border-radius:2px; font-family:"Rajdhani",sans-serif; transition:all 0.15s; }
+.prediction-skip:hover { border-color:var(--red); color:var(--red); }
+.prediction-prompt { padding:20px 16px 10px; font-size:16px; font-weight:600; color:var(--text); line-height:1.55; flex:1; }
+.prediction-date-row { display:flex; align-items:center; gap:8px; padding:0 16px 12px; }
+.prediction-date-label { font-size:10px; color:var(--muted); letter-spacing:1px; flex-shrink:0; }
+.prediction-date-input { background:var(--card); border:1px solid rgba(240,192,64,0.4); border-radius:2px; color:var(--gold); font-family:"Share Tech Mono",monospace; font-size:11px; padding:4px 8px; outline:none; flex:1; }
+.prediction-input-row { display:flex; gap:8px; padding:10px 16px; border-top:1px solid var(--border); background:rgba(0,0,0,0.15); }
+.prediction-textarea { flex:1; background:transparent; border:none; border-bottom:1px solid rgba(240,192,64,0.4); color:var(--text); font-family:"Rajdhani",sans-serif; font-size:14px; line-height:1.5; padding:4px 0; outline:none; resize:none; min-height:36px; max-height:100px; overflow-y:auto; }
+.prediction-textarea::placeholder { color:var(--muted); }
+.prediction-send { width:36px; height:36px; background:var(--gold); border:none; border-radius:3px; color:var(--bg); font-size:16px; font-weight:700; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all 0.15s; align-self:flex-end; }
+.prediction-send:hover { background:#f5ce55; }
+.prediction-send:disabled { background:var(--border); color:var(--muted); cursor:default; }
+
+/* Prediction verify banner */
+.prediction-verify { padding:10px 16px; background:rgba(240,192,64,0.08); border-bottom:1px solid rgba(240,192,64,0.25); }
+.prediction-verify-label { font-size:9px; font-weight:700; letter-spacing:2px; color:var(--gold); font-family:"Share Tech Mono",monospace; margin-bottom:8px; }
+.prediction-verify-btns { display:flex; gap:6px; }
+.pred-verify-btn { flex:1; font-family:"Rajdhani",sans-serif; font-size:11px; font-weight:700; letter-spacing:1px; padding:6px 4px; background:transparent; border:1px solid var(--border); color:var(--muted); cursor:pointer; border-radius:2px; transition:all 0.15s; text-align:center; }
+.pred-verify-btn.yes:hover     { border-color:var(--green);  color:var(--green); }
+.pred-verify-btn.no:hover      { border-color:var(--red);    color:var(--red); }
+.pred-verify-btn.partial:hover { border-color:var(--orange); color:var(--orange); }
+.pred-verify-btn.skip:hover    { color:var(--muted); opacity:0.6; }
+
+/* ── STATUS_ENTRY card ── */
+.status-entry-card {
+    background: var(--card);
+    border: 1px solid rgba(77,221,232,0.25);
+    border-radius: 3px;
+    overflow: hidden;
+    animation: cardIn 0.25s ease forwards;
+    min-height: calc(90dvh - 180px);
+    display: flex;
+    flex-direction: column;
+}
+.status-entry-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+}
+.status-entry-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--teal);
+    font-family: "Share Tech Mono", monospace;
+}
+.status-entry-skip {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 2px 8px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 2px;
+    font-family: "Rajdhani", sans-serif;
+    transition: all 0.15s;
+}
+.status-entry-skip:hover { border-color: var(--red); color: var(--red); }
+.status-entry-prompt {
+    padding: 20px 16px 16px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.55;
+    flex: 1;
+    letter-spacing: 0.3px;
+}
+.status-entry-input-row {
+    display: flex;
+    gap: 8px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    background: rgba(0,0,0,0.15);
+}
+.status-entry-textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border2);
+    color: var(--text);
+    font-family: "Rajdhani", sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 4px 0;
+    outline: none;
+    resize: none;
+    min-height: 36px;
+    max-height: 100px;
+    overflow-y: auto;
+}
+.status-entry-textarea::placeholder { color: var(--muted); }
+.status-entry-send {
+    width: 36px;
+    height: 36px;
+    background: var(--teal);
+    border: none;
+    border-radius: 3px;
+    color: var(--bg);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    align-self: flex-end;
+}
+.status-entry-send:hover { background: #6ef0f8; }
+.status-entry-send:disabled { background: var(--border); color: var(--muted); cursor: default; }
+
+/* ── SLOP card ── */
+.slop-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    animation: cardIn 0.25s ease forwards;
+    min-height: calc(90dvh - 180px);
+    display: flex;
+    flex-direction: column;
+}
+.slop-image-frame {
+    flex: 1;
+    background: #080f1e;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.slop-image-placeholder {
+    width: 48px;
+    height: 48px;
+    border: 1px solid var(--border2);
+    border-radius: 2px;
+    opacity: 0.3;
+}
+.slop-caption {
+    padding: 14px 16px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text2);
+    font-weight: 500;
+    letter-spacing: 0.2px;
+}
+
+/* ── CONTRAST card ── */
+.contrast-card {
+    background: var(--card); border: 1px solid rgba(232,122,77,0.25); border-radius: 3px;
+    overflow: hidden; animation: cardIn 0.25s ease forwards;
+    min-height: calc(90dvh - 180px); display: flex; flex-direction: column;
+}
+.contrast-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
+.contrast-label  { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--orange); font-family:"Share Tech Mono",monospace; }
+.contrast-skip   { font-size:9px; font-weight:700; letter-spacing:1px; padding:2px 8px; background:transparent; border:1px solid var(--border); color:var(--muted); cursor:pointer; border-radius:2px; font-family:"Rajdhani",sans-serif; transition:all 0.15s; }
+.contrast-skip:hover { border-color:var(--red); color:var(--red); }
+.contrast-entries { display:flex; flex-direction:column; gap:8px; padding:12px 16px; flex:1; }
+.contrast-entry  { flex:1; padding:12px; background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:2px; font-size:12px; line-height:1.55; color:var(--text2); }
+.contrast-entry-label { font-size:8px; font-weight:700; letter-spacing:2px; color:var(--muted); font-family:"Share Tech Mono",monospace; margin-bottom:6px; }
+.contrast-input-row { display:flex; gap:8px; padding:10px 16px; border-top:1px solid var(--border); background:rgba(0,0,0,0.15); flex-shrink:0; }
+.contrast-textarea { flex:1; background:transparent; border:none; border-bottom:1px solid rgba(232,122,77,0.4); color:var(--text); font-family:"Rajdhani",sans-serif; font-size:14px; padding:4px 0; outline:none; resize:none; min-height:32px; max-height:80px; }
+.contrast-textarea::placeholder { color:var(--muted); }
+.contrast-send { width:36px; height:36px; background:var(--orange); border:none; border-radius:3px; color:#fff; font-size:16px; font-weight:700; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all 0.15s; align-self:flex-end; }
+.contrast-send:disabled { background:var(--border); color:var(--muted); cursor:default; }
+
+/* ── BRIDGE card ── */
+.bridge-card {
+    background: var(--card); border: 1px solid rgba(74,159,232,0.25); border-radius: 3px;
+    overflow: hidden; animation: cardIn 0.25s ease forwards;
+    min-height: calc(90dvh - 180px); display: flex; flex-direction: column;
+}
+.bridge-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
+.bridge-label  { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--blue); font-family:"Share Tech Mono",monospace; }
+.bridge-skip   { font-size:9px; font-weight:700; letter-spacing:1px; padding:2px 8px; background:transparent; border:1px solid var(--border); color:var(--muted); cursor:pointer; border-radius:2px; font-family:"Rajdhani",sans-serif; transition:all 0.15s; }
+.bridge-skip:hover { border-color:var(--red); color:var(--red); }
+.bridge-entries { display:flex; flex-direction:column; gap:8px; padding:12px 16px; flex:1; }
+.bridge-entry  { flex:1; padding:12px; background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:2px; font-size:12px; line-height:1.55; color:var(--text2); }
+.bridge-entry-label { font-size:8px; font-weight:700; letter-spacing:2px; color:var(--muted); font-family:"Share Tech Mono",monospace; margin-bottom:6px; }
+.bridge-connector { text-align:center; font-size:18px; color:var(--border2); flex-shrink:0; padding:2px 0; }
+.bridge-input-row { display:flex; gap:8px; padding:10px 16px; border-top:1px solid var(--border); background:rgba(0,0,0,0.15); flex-shrink:0; }
+.bridge-textarea { flex:1; background:transparent; border:none; border-bottom:1px solid rgba(74,159,232,0.4); color:var(--text); font-family:"Rajdhani",sans-serif; font-size:14px; padding:4px 0; outline:none; resize:none; min-height:32px; max-height:80px; }
+.bridge-textarea::placeholder { color:var(--muted); }
+.bridge-send { width:36px; height:36px; background:var(--blue); border:none; border-radius:3px; color:#fff; font-size:16px; font-weight:700; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all 0.15s; align-self:flex-end; }
+.bridge-send:disabled { background:var(--border); color:var(--muted); cursor:default; }
+
+/* ── AUDIT card ── */
+.audit-card {
+    background: var(--card); border: 1px solid rgba(180,77,232,0.25); border-radius: 3px;
+    overflow: hidden; animation: cardIn 0.25s ease forwards;
+    min-height: calc(90dvh - 180px); display: flex; flex-direction: column;
+}
+.audit-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
+.audit-label  { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--purple); font-family:"Share Tech Mono",monospace; }
+.audit-skip   { font-size:9px; font-weight:700; letter-spacing:1px; padding:2px 8px; background:transparent; border:1px solid var(--border); color:var(--muted); cursor:pointer; border-radius:2px; font-family:"Rajdhani",sans-serif; }
+.audit-skip:hover { border-color:var(--red); color:var(--red); }
+.audit-entries { flex:1; padding:10px 16px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
+.audit-entry-item { padding:8px 10px; background:rgba(0,0,0,0.2); border-left:2px solid var(--border2); font-size:11px; line-height:1.5; color:var(--text2); }
+.audit-input-row { display:flex; gap:8px; padding:10px 16px; border-top:1px solid var(--border); background:rgba(0,0,0,0.15); flex-shrink:0; }
+.audit-textarea { flex:1; background:transparent; border:none; border-bottom:1px solid rgba(180,77,232,0.4); color:var(--text); font-family:"Rajdhani",sans-serif; font-size:14px; padding:4px 0; outline:none; resize:none; min-height:32px; max-height:80px; }
+.audit-textarea::placeholder { color:var(--muted); }
+.audit-send { width:36px; height:36px; background:var(--purple); border:none; border-radius:3px; color:#fff; font-size:16px; font-weight:700; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all 0.15s; align-self:flex-end; }
+.audit-send:disabled { background:var(--border); color:var(--muted); cursor:default; }
+
+/* ── MOMENTUM card ── */
+.momentum-card {
+    background: var(--card); border: 1px solid rgba(77,221,232,0.2); border-radius: 3px;
+    overflow: hidden; animation: cardIn 0.25s ease forwards;
+    min-height: calc(90dvh - 180px); display: flex; flex-direction: column;
+}
+.momentum-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
+.momentum-label  { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--teal); font-family:"Share Tech Mono",monospace; }
+.momentum-body   { flex:1; display:flex; flex-direction:column; justify-content:center; padding:20px 16px 16px; }
+.momentum-chart  { display:flex; align-items:flex-end; gap:4px; height:80px; margin-bottom:12px; }
+.momentum-bar    { flex:1; background:var(--border2); border-radius:2px 2px 0 0; min-height:3px; transition:height 0.3s ease; }
+.momentum-bar.active { background:var(--teal); }
+.momentum-labels { display:flex; justify-content:space-between; }
+.momentum-label-start { font-size:9px; color:var(--muted); font-family:"Share Tech Mono",monospace; }
+.momentum-label-end   { font-size:9px; color:var(--muted); font-family:"Share Tech Mono",monospace; }
+.momentum-total  { text-align:center; font-size:11px; color:var(--muted); letter-spacing:1px; margin-top:12px; }
+
+/* ── QUOTE card ── */
+.quote-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 3px;
+    overflow: hidden; animation: cardIn 0.25s ease forwards;
+    min-height: calc(90dvh - 180px); display: flex; flex-direction: column; opacity: 0.9;
+}
+.quote-image-frame { flex:1; background:#060c18; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:center; }
+.quote-image-placeholder { width:48px; height:48px; border:1px solid var(--border2); border-radius:2px; opacity:0.3; }
+.quote-caption { padding:14px 16px 10px; }
+.quote-text   { font-size:14px; line-height:1.65; color:var(--text2); font-style:italic; margin-bottom:8px; }
+.quote-attribution { font-size:10px; font-weight:700; letter-spacing:2px; color:var(--muted); font-family:"Share Tech Mono",monospace; }
+
+/* ── PROMPT card ── */
+.prompt-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 3px;
+    overflow: hidden; animation: cardIn 0.25s ease forwards;
+    min-height: calc(90dvh - 180px); display: flex; flex-direction: column;
+    justify-content: center; padding: 40px 24px;
+}
+.prompt-label   { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--muted); font-family:"Share Tech Mono",monospace; margin-bottom:20px; }
+.prompt-content { font-size:18px; line-height:1.6; color:var(--text); font-weight:600; letter-spacing:0.3px; }
+
+/* ── TWIN card ── */
+.twin-card {
+    background: var(--card);
+    border: 1px solid rgba(77,232,148,0.2);
+    border-radius: 3px;
+    overflow: hidden;
+    animation: cardIn 0.25s ease forwards;
+    min-height: calc(90dvh - 180px);
+    display: flex;
+    flex-direction: column;
+}
+.twin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+.twin-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--green);
+    font-family: "Share Tech Mono", monospace;
+}
+.twin-prompt-area {
+    padding: 16px 16px 12px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+.twin-prompt-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--muted);
+    font-family: "Share Tech Mono", monospace;
+    margin-bottom: 8px;
+}
+.twin-prompt-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text);
+    font-weight: 500;
+}
+.twin-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 16px;
+    flex: 1;
+}
+.twin-option {
+    flex: 1;
+    font-family: "Rajdhani", sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.5;
+    padding: 12px 14px;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+    text-align: left;
+    letter-spacing: 0.2px;
+}
+.twin-option:hover { border-color: var(--green); color: var(--text); }
+.twin-option.selected { border-color: var(--green); color: var(--green); background: rgba(77,232,148,0.08); }
+.twin-skip {
+    font-size: 9px; font-weight: 700; letter-spacing: 1px;
+    padding: 2px 8px; background: transparent;
+    border: 1px solid var(--border); color: var(--muted);
+    cursor: pointer; border-radius: 2px;
+    font-family: "Rajdhani", sans-serif; transition: all 0.15s;
+}
+.twin-skip:hover { border-color: var(--red); color: var(--red); }
+
+/* ── SECRET card ── */
+.secret-card {
+    background: var(--card);
+    border: 1px solid rgba(77,221,232,0.2);
+    border-radius: 3px;
+    overflow: hidden;
+    animation: cardIn 0.25s ease forwards;
+    min-height: calc(90dvh - 180px);
+    display: flex;
+    flex-direction: column;
+}
+.secret-header {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+}
+.secret-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--teal);
+    font-family: "Share Tech Mono", monospace;
+}
+.secret-prompt {
+    padding: 24px 16px 16px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text2);
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+.secret-categories {
+    display: flex;
+    gap: 8px;
+    padding: 0 16px 20px;
+}
+.secret-cat-btn {
+    flex: 1;
+    font-family: "Rajdhani", sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 10px 4px;
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+    text-align: center;
+}
+.secret-cat-btn:hover { border-color: var(--teal); color: var(--teal); }
+.secret-reveal {
+    padding: 20px 16px 24px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    animation: cardIn 0.3s ease forwards;
+}
+.secret-reveal-cat {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--teal);
+    font-family: "Share Tech Mono", monospace;
+    margin-bottom: 12px;
+}
+
+/* ── TAG_SUGGESTER card ── */
+.suggester-card {
+    background: var(--card);
+    border: 1px solid rgba(77,221,232,0.3);
+    border-radius: 3px;
+    overflow: hidden;
+    animation: cardIn 0.25s ease forwards;
+}
+.suggester-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px 6px;
+}
+.suggester-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--teal);
+    font-family: "Share Tech Mono", monospace;
+}
+.suggester-shuffle {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 2px 8px;
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 2px;
+    font-family: "Rajdhani", sans-serif;
+    transition: all 0.15s;
+}
+.suggester-shuffle:hover { border-color: var(--teal); color: var(--teal); }
+.suggester-ref {
+    padding: 0 10px 8px;
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.5;
+    border-bottom: 1px solid var(--border);
+    font-style: italic;
+}
+.suggester-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px;
+    border-bottom: 1px solid var(--border);
+}
+.subtag-chip {
+    font-family: "Share Tech Mono", monospace;
+    font-size: 10px;
+    padding: 4px 10px;
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+}
+.subtag-chip:hover  { border-color: var(--teal); color: var(--teal); }
+.subtag-chip.active { border-color: var(--teal); color: var(--teal); background: rgba(77,221,232,0.1); }
+.suggester-add {
+    display: flex;
+    gap: 8px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+}
+.suggester-add-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border2);
+    color: var(--text);
+    font-family: "Share Tech Mono", monospace;
+    font-size: 11px;
+    padding: 3px 0;
+    outline: none;
+}
+.suggester-add-input::placeholder { color: var(--muted); }
+.suggester-add-btn {
+    font-family: "Rajdhani", sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 3px 10px;
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+}
+.suggester-add-btn:hover { border-color: var(--teal); color: var(--teal); }
+.suggester-actions {
+    display: flex;
+    border-top: none;
+}
+.suggester-done {
+    flex: 1;
+    font-family: "Rajdhani", sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 8px;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+}
+.suggester-done:hover { color: var(--green); }
+.suggester-dismiss {
+    font-family: "Rajdhani", sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    border-left: 1px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.suggester-dismiss:hover { color: var(--red); }
+
+/* Subtag display on cards */
+.entry-subtags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 0 16px 12px;
+}
+.subtag-display {
+    font-family: "Share Tech Mono", monospace;
+    font-size: 9px;
+    padding: 2px 6px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 2px;
+}
+
+/* Main tag on card */
+.entry-maintag {
+    font-family: "Share Tech Mono", monospace;
+    font-size: 9px;
+    padding: 2px 6px;
+    border: 1px solid rgba(77,221,232,0.3);
+    color: var(--teal);
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+/* Type colors */
+.type-UNSORTED  { color: var(--muted);   border-color: var(--border); }
+.type-THOUGHT   { color: var(--teal);    border-color: rgba(77,221,232,0.4); }
+.type-LEARNING  { color: var(--blue);    border-color: rgba(74,159,232,0.4); }
+.type-QUESTION  { color: var(--gold);    border-color: rgba(240,192,64,0.4); }
+.type-DEADLINE  { color: var(--red);     border-color: rgba(232,77,77,0.4); }
+.type-OPEN_LOOP { color: var(--orange);  border-color: rgba(232,122,77,0.4); }
+.type-WIN       { color: var(--green);   border-color: rgba(77,232,148,0.4); }
+.type-SIGNAL    { color: var(--purple);  border-color: rgba(180,77,232,0.4); }
+.type-WORRY     { color: #e84d9a;        border-color: rgba(232,77,154,0.4); }
+.type-STATUS    { color: #9ae84d;        border-color: rgba(154,232,77,0.4); }
+/* ── TIME CAPSULE card ── */
+.capsule-card {
+    background: var(--card);
+    border: 1px solid rgba(180,77,232,0.3);
+    border-radius: 3px;
+    overflow: hidden;
+    animation: cardIn 0.25s ease forwards;
+    min-height: calc(90dvh - 180px);
+    display: flex;
+    flex-direction: column;
+}
+.capsule-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); }
+.capsule-label  { font-size:9px; font-weight:700; letter-spacing:2px; color:var(--purple); font-family:"Share Tech Mono",monospace; }
+.capsule-skip   { font-size:9px; font-weight:700; letter-spacing:1px; padding:2px 8px; background:transparent; border:1px solid var(--border); color:var(--muted); cursor:pointer; border-radius:2px; font-family:"Rajdhani",sans-serif; transition:all 0.15s; }
+.capsule-skip:hover { border-color:var(--red); color:var(--red); }
+.capsule-prompt { padding:20px 16px 16px; font-size:16px; font-weight:600; color:var(--text); line-height:1.55; flex:1; }
+.capsule-hint   { padding:0 16px 12px; font-size:10px; color:var(--muted); letter-spacing:0.5px; font-style:italic; }
+.capsule-input-row { display:flex; gap:8px; padding:10px 16px; border-top:1px solid var(--border); background:rgba(0,0,0,0.15); }
+.capsule-textarea { flex:1; background:transparent; border:none; border-bottom:1px solid rgba(180,77,232,0.4); color:var(--text); font-family:"Rajdhani",sans-serif; font-size:14px; line-height:1.5; padding:4px 0; outline:none; resize:none; min-height:36px; max-height:100px; overflow-y:auto; }
+.capsule-textarea::placeholder { color:var(--muted); }
+.capsule-send { width:36px; height:36px; background:var(--purple); border:none; border-radius:3px; color:#fff; font-size:16px; font-weight:700; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all 0.15s; align-self:flex-end; }
+.capsule-send:hover { background:#c96ff0; }
+.capsule-send:disabled { background:var(--border); color:var(--muted); cursor:default; }
+
+/* Sealed capsule in feed */
+.capsule-sealed { background:rgba(180,77,232,0.06); border:1px solid rgba(180,77,232,0.25); border-radius:3px; padding:14px 16px; min-height:120px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:8px; text-align:center; }
+.capsule-sealed-icon  { font-size:28px; }
+.capsule-sealed-label { font-size:9px; font-weight:700; letter-spacing:2px; color:var(--purple); font-family:"Share Tech Mono",monospace; }
+.capsule-sealed-date  { font-size:11px; color:var(--muted); }
+
+/* Revealed capsule */
+.capsule-reveal-banner { padding:8px 16px; background:rgba(180,77,232,0.12); border-bottom:1px solid rgba(180,77,232,0.25); font-size:10px; font-weight:700; letter-spacing:2px; color:var(--purple); font-family:"Share Tech Mono",monospace; }
+
+/* ── PREDICTION card ── */
+.prediction-card {
+    background: var(--card);
+    border: 1px solid rgba(240,192,64,0.3);
+    border-radius: 3px;
+    overflow: hidden;
+    animation: cardIn 0.25s ease forwards;
+    min-height: calc(90dvh - 180px);
+    display: flex;
+    flex-direction: column;
+}
+.prediction-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); }
+.prediction-label  { font-size:9px; font-weight:700; letter-spacing:2px; color:var(--gold); font-family:"Share Tech Mono",monospace; }
+.prediction-skip   { font-size:9px; font-weight:700; letter-spacing:1px; padding:2px 8px; background:transparent; border:1px solid var(--border); color:var(--muted); cursor:pointer; border-radius:2px; font-family:"Rajdhani",sans-serif; transition:all 0.15s; }
+.prediction-skip:hover { border-color:var(--red); color:var(--red); }
+.prediction-prompt { padding:20px 16px 10px; font-size:16px; font-weight:600; color:var(--text); line-height:1.55; flex:1; }
+.prediction-date-row { display:flex; align-items:center; gap:8px; padding:0 16px 12px; }
+.prediction-date-label { font-size:10px; color:var(--muted); letter-spacing:1px; flex-shrink:0; }
+.prediction-date-input { background:var(--card); border:1px solid rgba(240,192,64,0.4); border-radius:2px; color:var(--gold); font-family:"Share Tech Mono",monospace; font-size:11px; padding:4px 8px; outline:none; flex:1; }
+.prediction-input-row { display:flex; gap:8px; padding:10px 16px; border-top:1px solid var(--border); background:rgba(0,0,0,0.15); }
+.prediction-textarea { flex:1; background:transparent; border:none; border-bottom:1px solid rgba(240,192,64,0.4); color:var(--text); font-family:"Rajdhani",sans-serif; font-size:14px; line-height:1.5; padding:4px 0; outline:none; resize:none; min-height:36px; max-height:100px; overflow-y:auto; }
+.prediction-textarea::placeholder { color:var(--muted); }
+.prediction-send { width:36px; height:36px; background:var(--gold); border:none; border-radius:3px; color:var(--bg); font-size:16px; font-weight:700; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all 0.15s; align-self:flex-end; }
+.prediction-send:hover { background:#f5ce55; }
+.prediction-send:disabled { background:var(--border); color:var(--muted); cursor:default; }
+
+/* Prediction verify banner */
+.prediction-verify { padding:10px 16px; background:rgba(240,192,64,0.08); border-bottom:1px solid rgba(240,192,64,0.25); }
+.prediction-verify-label { font-size:9px; font-weight:700; letter-spacing:2px; color:var(--gold); font-family:"Share Tech Mono",monospace; margin-bottom:8px; }
+.prediction-verify-btns { display:flex; gap:6px; }
+.pred-verify-btn { flex:1; font-family:"Rajdhani",sans-serif; font-size:11px; font-weight:700; letter-spacing:1px; padding:6px 4px; background:transparent; border:1px solid var(--border); color:var(--muted); cursor:pointer; border-radius:2px; transition:all 0.15s; text-align:center; }
+.pred-verify-btn.yes:hover     { border-color:var(--green);  color:var(--green); }
+.pred-verify-btn.no:hover      { border-color:var(--red);    color:var(--red); }
+.pred-verify-btn.partial:hover { border-color:var(--orange); color:var(--orange); }
+.pred-verify-btn.skip:hover    { color:var(--muted); opacity:0.6; }
+
+/* ── STATUS_ENTRY card ── */
+.contrast-card {
+    background: var(--card); border: 1px solid rgba(232,122,77,0.25); border-radius: 3px;
+    overflow: hidden; animation: cardIn 0.25s ease forwards;
+    min-height: calc(90dvh - 180px); display: flex; flex-direction: column;
+}
+.contrast-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
+.contrast-label  { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--orange); font-family:"Share Tech Mono",monospace; }
+.contrast-skip   { font-size:9px; font-weight:700; letter-spacing:1px; padding:2px 8px; background:transparent; border:1px solid var(--border); color:var(--muted); cursor:pointer; border-radius:2px; font-family:"Rajdhani",sans-serif; transition:all 0.15s; }
+.contrast-skip:hover { border-color:var(--red); color:var(--red); }
+.contrast-entries { display:flex; flex-direction:column; gap:8px; padding:12px 16px; flex:1; }
+.contrast-entry  { flex:1; padding:12px; background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:2px; font-size:12px; line-height:1.55; color:var(--text2); }
+.contrast-entry-label { font-size:8px; font-weight:700; letter-spacing:2px; color:var(--muted); font-family:"Share Tech Mono",monospace; margin-bottom:6px; }
+.contrast-input-row { display:flex; gap:8px; padding:10px 16px; border-top:1px solid var(--border); background:rgba(0,0,0,0.15); flex-shrink:0; }
+.contrast-textarea { flex:1; background:transparent; border:none; border-bottom:1px solid rgba(232,122,77,0.4); color:var(--text); font-family:"Rajdhani",sans-serif; font-size:14px; padding:4px 0; outline:none; resize:none; min-height:32px; max-height:80px; }
+.contrast-textarea::placeholder { color:var(--muted); }
+.contrast-send { width:36px; height:36px; background:var(--orange); border:none; border-radius:3px; color:#fff; font-size:16px; font-weight:700; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all 0.15s; align-self:flex-end; }
+.contrast-send:disabled { background:var(--border); color:var(--muted); cursor:default; }
+
+/* ── BRIDGE card ── */
+.bridge-card {
+    background: var(--card); border: 1px solid rgba(74,159,232,0.25); border-radius: 3px;
+    overflow: hidden; animation: cardIn 0.25s ease forwards;
+    min-height: calc(90dvh - 180px); display: flex; flex-direction: column;
+}
+.bridge-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
+.bridge-label  { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--blue); font-family:"Share Tech Mono",monospace; }
+.bridge-skip   { font-size:9px; font-weight:700; letter-spacing:1px; padding:2px 8px; background:transparent; border:1px solid var(--border); color:var(--muted); cursor:pointer; border-radius:2px; font-family:"Rajdhani",sans-serif; transition:all 0.15s; }
+.bridge-skip:hover { border-color:var(--red); color:var(--red); }
+.bridge-entries { display:flex; flex-direction:column; gap:8px; padding:12px 16px; flex:1; }
+.bridge-entry  { flex:1; padding:12px; background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:2px; font-size:12px; line-height:1.55; color:var(--text2); }
+.bridge-entry-label { font-size:8px; font-weight:700; letter-spacing:2px; color:var(--muted); font-family:"Share Tech Mono",monospace; margin-bottom:6px; }
+.bridge-connector { text-align:center; font-size:18px; color:var(--border2); flex-shrink:0; padding:2px 0; }
+.bridge-input-row { display:flex; gap:8px; padding:10px 16px; border-top:1px solid var(--border); background:rgba(0,0,0,0.15); flex-shrink:0; }
+.bridge-textarea { flex:1; background:transparent; border:none; border-bottom:1px solid rgba(74,159,232,0.4); color:var(--text); font-family:"Rajdhani",sans-serif; font-size:14px; padding:4px 0; outline:none; resize:none; min-height:32px; max-height:80px; }
+.bridge-textarea::placeholder { color:var(--muted); }
+.bridge-send { width:36px; height:36px; background:var(--blue); border:none; border-radius:3px; color:#fff; font-size:16px; font-weight:700; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all 0.15s; align-self:flex-end; }
+.bridge-send:disabled { background:var(--border); color:var(--muted); cursor:default; }
+
+/* ── AUDIT card ── */
+.audit-card {
+    background: var(--card); border: 1px solid rgba(180,77,232,0.25); border-radius: 3px;
+    overflow: hidden; animation: cardIn 0.25s ease forwards;
+    min-height: calc(90dvh - 180px); display: flex; flex-direction: column;
+}
+.audit-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
+.audit-label  { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--purple); font-family:"Share Tech Mono",monospace; }
+.audit-skip   { font-size:9px; font-weight:700; letter-spacing:1px; padding:2px 8px; background:transparent; border:1px solid var(--border); color:var(--muted); cursor:pointer; border-radius:2px; font-family:"Rajdhani",sans-serif; }
+.audit-skip:hover { border-color:var(--red); color:var(--red); }
+.audit-entries { flex:1; padding:10px 16px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
+.audit-entry-item { padding:8px 10px; background:rgba(0,0,0,0.2); border-left:2px solid var(--border2); font-size:11px; line-height:1.5; color:var(--text2); }
+.audit-input-row { display:flex; gap:8px; padding:10px 16px; border-top:1px solid var(--border); background:rgba(0,0,0,0.15); flex-shrink:0; }
+.audit-textarea { flex:1; background:transparent; border:none; border-bottom:1px solid rgba(180,77,232,0.4); color:var(--text); font-family:"Rajdhani",sans-serif; font-size:14px; padding:4px 0; outline:none; resize:none; min-height:32px; max-height:80px; }
+.audit-textarea::placeholder { color:var(--muted); }
+.audit-send { width:36px; height:36px; background:var(--purple); border:none; border-radius:3px; color:#fff; font-size:16px; font-weight:700; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all 0.15s; align-self:flex-end; }
+.audit-send:disabled { background:var(--border); color:var(--muted); cursor:default; }
+
+/* ── MOMENTUM card ── */
+.momentum-card {
+    background: var(--card); border: 1px solid rgba(77,221,232,0.2); border-radius: 3px;
+    overflow: hidden; animation: cardIn 0.25s ease forwards;
+    min-height: calc(90dvh - 180px); display: flex; flex-direction: column;
+}
+.momentum-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
+.momentum-label  { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--teal); font-family:"Share Tech Mono",monospace; }
+.momentum-body   { flex:1; display:flex; flex-direction:column; justify-content:center; padding:20px 16px 16px; }
+.momentum-chart  { display:flex; align-items:flex-end; gap:4px; height:80px; margin-bottom:12px; }
+.momentum-bar    { flex:1; background:var(--border2); border-radius:2px 2px 0 0; min-height:3px; transition:height 0.3s ease; }
+.momentum-bar.active { background:var(--teal); }
+.momentum-labels { display:flex; justify-content:space-between; }
+.momentum-label-start { font-size:9px; color:var(--muted); font-family:"Share Tech Mono",monospace; }
+.momentum-label-end   { font-size:9px; color:var(--muted); font-family:"Share Tech Mono",monospace; }
+.momentum-total  { text-align:center; font-size:11px; color:var(--muted); letter-spacing:1px; margin-top:12px; }
+
+/* ── QUOTE card ── */
+.quote-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 3px;
+    overflow: hidden; animation: cardIn 0.25s ease forwards;
+    min-height: calc(90dvh - 180px); display: flex; flex-direction: column; opacity: 0.9;
+}
+.quote-image-frame { flex:1; background:#060c18; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:center; }
+.quote-image-placeholder { width:48px; height:48px; border:1px solid var(--border2); border-radius:2px; opacity:0.3; }
+.quote-caption { padding:14px 16px 10px; }
+.quote-text   { font-size:14px; line-height:1.65; color:var(--text2); font-style:italic; margin-bottom:8px; }
+.quote-attribution { font-size:10px; font-weight:700; letter-spacing:2px; color:var(--muted); font-family:"Share Tech Mono",monospace; }
+
+/* ── PROMPT card ── */
+.prompt-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 3px;
+    overflow: hidden; animation: cardIn 0.25s ease forwards;
+    min-height: calc(90dvh - 180px); display: flex; flex-direction: column;
+    justify-content: center; padding: 40px 24px;
+}
+.prompt-label   { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--muted); font-family:"Share Tech Mono",monospace; margin-bottom:20px; }
+.prompt-content { font-size:18px; line-height:1.6; color:var(--text); font-weight:600; letter-spacing:0.3px; }
+
+</style>
+</head>
+<body>
+
+<div class="hdr">
+    <span class="hdr-title">ARCHIVE</span>
+    <span class="hdr-count" id="entry-count">0 ENTRIES</span>
+    <div class="hdr-filters">
+        <button class="filter-btn active" data-filter="ALL" onclick="setFilter(this)">ALL</button>
+        <button class="filter-btn" data-filter="UNSORTED" onclick="setFilter(this)">UNSORTED</button>
+        <button class="filter-btn" data-filter="DEADLINE" onclick="setFilter(this)">DUE</button>
+        <button class="filter-btn" data-filter="PINNED" onclick="setFilter(this)">PINNED</button>
+    </div>
+</div>
+
+<div style="width:100%;max-width:480px;text-align:center;padding:6px 0 2px;">
+    <span style="font-size:9px;font-family:Share Tech Mono,monospace;color:#1e4070;letter-spacing:2px;">↑ SWIPE TO ADVANCE</span>
+</div>
+<div class="feed" id="feed"></div>
+
+<!-- Input selector sheet -->
+<div class="selector-sheet-bg" id="selector-bg" onclick="closeSelectorIfBg(event)">
+    <div class="selector-sheet">
+        <p class="selector-title">WHAT WAS THIS?</p>
+        <div class="selector-grid" id="selector-grid"></div>
+        <button class="selector-skip" onclick="closeSelector()">LEAVE AS UNSORTED</button>
+    </div>
+</div>
+
+<!-- Snooze modal -->
+<div class="snooze-modal-bg" id="snooze-modal">
+    <div class="snooze-modal">
+        <p class="snooze-title">SNOOZE UNTIL</p>
+        <div class="snooze-opts">
+            <button class="snooze-opt" onclick="doSnooze(3600000)">1 hour</button>
+            <button class="snooze-opt" onclick="doSnooze(86400000)">Tomorrow</button>
+            <button class="snooze-opt" onclick="doSnooze(259200000)">3 days</button>
+            <button class="snooze-opt" onclick="doSnooze(604800000)">1 week</button>
+            <button class="snooze-opt" onclick="closeSnooze()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Capture bar -->
+<div class="capture-bar">
+    <div class="capture-row1">
+        <textarea
+            class="capture-input"
+            id="capture-input"
+            placeholder="what's on your mind..."
+            rows="1"
+            oninput="autoResize(this)"
+            onkeydown="handleCaptureKey(event)"
+        ></textarea>
+        <button class="capture-send" id="capture-send" onclick="saveEntry()" disabled>↑</button>
+    </div>
+    <div class="capture-row2">
+        <select class="capture-select" id="sel-maintag" onchange="onSelectChange(this)">
+            <option value="">TAG</option>
+            <option value="PERSON">PERSON</option>
+            <option value="PLACE">PLACE</option>
+            <option value="THING">THING</option>
+            <option value="IDEA">IDEA</option>
+            <option value="TASK">TASK</option>
+            <option value="QUESTION">QUESTION</option>
+        </select>
+        <select class="capture-select" id="sel-type" onchange="onSelectChange(this)">
+            <option value="">TYPE</option>
+            <option value="THOUGHT">THOUGHT</option>
+            <option value="LEARNING">LEARNING</option>
+            <option value="DEADLINE">DEADLINE</option>
+            <option value="OPEN_LOOP">OPEN LOOP</option>
+            <option value="WIN">WIN</option>
+            <option value="SIGNAL">SIGNAL</option>
+            <option value="WORRY">WORRY</option>
+            <option value="STATUS">STATUS</option>
+        </select>
+        <select class="capture-select" id="sel-stat" onchange="onSelectChange(this)">
+            <option value="">STAT</option>
+            <option value="BODY">BODY</option>
+            <option value="MIND">MIND</option>
+            <option value="POSITION">POSITION</option>
+            <option value="CONNECTIONS">CONNECTIONS</option>
+        </select>
+        <select class="capture-select" id="sel-stakes" onchange="onSelectChange(this)" style="display:none">
+            <option value="">STAKES</option>
+            <option value="LOW">LOW</option>
+            <option value="MEDIUM">MEDIUM</option>
+            <option value="HIGH">HIGH</option>
+        </select>
+        <input type="datetime-local" class="capture-select" id="sel-deadline" style="display:none;font-family:Share Tech Mono,monospace;font-size:9px;" onchange="onSelectChange(this)">
+    </div>
+</div>
+
+<script>
+/* ── SLOP library ── */
+const SLOP = [
+    "The brain consolidates memory during sleep. Every nap is a hard drive defrag.",
+    "You are not behind. There is no schedule.",
+    "Most decisions don't matter as much as the decision to decide.",
+    "The map is not the territory. Your idea of a person is not that person.",
+    "Entropy always wins. Your only move is to slow it down.",
+    "Urgency is often manufactured. Important rarely announces itself.",
+    "The strongest signal of someone's values is how they spend time when no one is watching.",
+    "Complexity is usually a symptom of unresolved ambiguity.",
+    "You cannot think your way out of something you behaved your way into.",
+    "Most friction is just unfamiliarity.",
+    "The gap between knowing and doing is where most people live.",
+    "A system that requires willpower to maintain is not a system.",
+    "Consistency compounds. Intensity fades.",
+    "The best time to build something is before you need it.",
+    "Every expert was once a beginner who didn't quit at the awkward phase.",
+    "Boredom is the precondition for creativity.",
+    "You remember things better when you explain them to someone else.",
+    "The obstacle is information. It's telling you something the plan didn't account for.",
+    "Rest is not the absence of work. It's a different kind of work.",
+    "Most people overestimate what they can do in a day and underestimate what they can do in a year.",
+    "A question held long enough becomes an intuition.",
+    "The version of you that exists in other people's minds is a fictional character.",
+    "Comparison is useful for calibration. Corrosive for motivation.",
+    "You don't rise to the level of your goals. You fall to the level of your systems.",
+    "Motion is not the same as progress.",
+    "The things that bother you most about others are usually things you recognize in yourself.",
+    "Every skill has an ugly middle phase. Most people quit there.",
+    "Attention is the most finite resource you have.",
+    "The strongest relationships are built in small moments, not big gestures.",
+    "You can't optimize your way to meaning.",
+];
+
+function getSlop() {
+    return SLOP[Math.floor(Math.random() * SLOP.length)];
+}
+
+/* ── CONTRAST card ── */
+/* ── QUOTE library ── */
+const QUOTES = [
+    { text: "The only way to do great work is to love what you do.", attr: "Steve Jobs" },
+    { text: "In the middle of every difficulty lies opportunity.", attr: "Albert Einstein" },
+    { text: "It is not the mountain we conquer, but ourselves.", attr: "Edmund Hillary" },
+    { text: "The future belongs to those who believe in the beauty of their dreams.", attr: "Eleanor Roosevelt" },
+    { text: "Do not go where the path may lead. Go instead where there is no path and leave a trail.", attr: "Ralph Waldo Emerson" },
+    { text: "You miss 100% of the shots you don't take.", attr: "Wayne Gretzky" },
+    { text: "Whether you think you can or you think you can't, you're right.", attr: "Henry Ford" },
+    { text: "The mind is not a vessel to be filled but a fire to be kindled.", attr: "Plutarch" },
+    { text: "What we know is a drop. What we don't know is an ocean.", attr: "Isaac Newton" },
+    { text: "Simplicity is the ultimate sophistication.", attr: "Leonardo da Vinci" },
+    { text: "A person who never made a mistake never tried anything new.", attr: "Albert Einstein" },
+    { text: "The unexamined life is not worth living.", attr: "Socrates" },
+    { text: "We are what we repeatedly do. Excellence, then, is not an act but a habit.", attr: "Aristotle" },
+    { text: "The only true wisdom is in knowing you know nothing.", attr: "Socrates" },
+    { text: "Absorb what is useful, discard what is useless, add what is essentially your own.", attr: "Bruce Lee" },
+];
+
+function getQuote() {
+    return QUOTES[Math.floor(Math.random() * QUOTES.length)];
+}
+
+function buildQuoteCard() {
+    var q = getQuote();
+    return '<div class="quote-card">' +
+        '<div class="quote-image-frame"><div class="quote-image-placeholder"></div></div>' +
+        '<div class="quote-caption">' +
+            '<div class="quote-text">' + escHtml(q.text) + '</div>' +
+            '<div class="quote-attribution">— ' + escHtml(q.attr) + '</div>' +
+        '</div>' +
+    '</div>';
+}
+
+/* ── PROMPT library ── */
+const PROMPTS = [
+    "What would you do if you weren't afraid of looking stupid?",
+    "Name something you keep meaning to start.",
+    "What does rest actually feel like for you?",
+    "Who do you want to be more like, and why?",
+    "What's one thing you know to be true that most people don't agree with?",
+    "If you could only keep three things you currently own, what would they be?",
+    "What's a skill you've been underestimating in yourself?",
+    "What's the last thing that genuinely surprised you?",
+    "What's something you've forgiven yourself for?",
+    "Where do you feel most like yourself?",
+    "What's a version of your future you're secretly hoping for?",
+    "What's one thing you'd tell your 16-year-old self?",
+    "What problem keeps coming back no matter how many times you solve it?",
+    "What are you procrastinating on right now, and why?",
+    "What's something you believe that you can't fully explain?",
+];
+
+function getPrompt() {
+    return PROMPTS[Math.floor(Math.random() * PROMPTS.length)];
+}
+
+function buildPromptCard() {
+    return '<div class="prompt-card">' +
+        '<div class="prompt-label">PROMPT</div>' +
+        '<div class="prompt-content">' + escHtml(getPrompt()) + '</div>' +
+    '</div>';
+}
+
+/* ── TWIN card ── */
+function buildTwinCard() {
+    // Need at least 4 entries
+    var pool = ARCHIVE.entries.filter(function(e) {
+        return !e.archived && e.content && e.content.trim().length > 10;
+    });
+    if (pool.length < 4) return null;
+
+    // Pick 4 random distinct entries
+    var shuffled = pool.slice().sort(function() { return Math.random() - 0.5; });
+    var picks    = shuffled.slice(0, 4);
+    var prompt   = picks[0];
+    var options  = picks.slice(1);
+
+    var id = "twin_" + (++_twinCardId);
+
+    var optHtml = options.map(function(e, i) {
+        var preview = e.content.length > 120 ? e.content.slice(0, 120) + "..." : e.content;
+        return '<button class="twin-option" id="' + id + '-opt-' + i + '" ' +
+            'onclick="selectTwin(&#39;' + id + '&#39;,' + i + ',&#39;' + e.id + '&#39;,&#39;' + prompt.id + '&#39;)">' +
+            escHtml(preview) + '</button>';
+    }).join("");
+
+    var promptPreview = prompt.content.length > 150
+        ? prompt.content.slice(0, 150) + "…"
+        : prompt.content;
+
+    return '<div class="twin-card" id="' + id + '">' +
+        '<div class="twin-header">' +
+            '<span class="twin-label">TWIN</span>' +
+            '<button class="twin-skip" onclick="advanceDeck()">SKIP</button>' +
+        '</div>' +
+        '<div class="twin-prompt-area">' +
+            '<div class="twin-prompt-label">WHICH MATCHES THIS?</div>' +
+            '<div class="twin-prompt-text">' + escHtml(promptPreview) + '</div>' +
+        '</div>' +
+        '<div class="twin-options" id="' + id + '-opts">' + optHtml + '</div>' +
+    '</div>';
+}
+
+function selectTwin(cardId, optIdx, matchedId, promptId) {
+    // Highlight selected
+    for (var i = 0; i < 3; i++) {
+        var btn = document.getElementById(cardId + "-opt-" + i);
+        if (btn) btn.classList.remove("selected");
+    }
+    var selected = document.getElementById(cardId + "-opt-" + optIdx);
+    if (selected) selected.classList.add("selected");
+
+    // Record the association on both entries
+    var promptEntry  = ARCHIVE.entries.find(function(e) { return e.id === promptId; });
+    var matchedEntry = ARCHIVE.entries.find(function(e) { return e.id === matchedId; });
+    if (promptEntry && matchedEntry) {
+        if (!promptEntry.meta) promptEntry.meta = {};
+        if (!promptEntry.meta.twins) promptEntry.meta.twins = [];
+        if (promptEntry.meta.twins.indexOf(matchedId) === -1) promptEntry.meta.twins.push(matchedId);
+        if (!matchedEntry.meta) matchedEntry.meta = {};
+        if (!matchedEntry.meta.twins) matchedEntry.meta.twins = [];
+        if (matchedEntry.meta.twins.indexOf(promptId) === -1) matchedEntry.meta.twins.push(promptId);
+        save();
+    }
+
+    // Advance after short delay so selection is visible
+    setTimeout(function() { advanceDeck(); }, 500);
+}
+
+/* ── CONTRAST card ── */
+function buildContrastCard() {
+    var pool = ARCHIVE.entries.filter(function(e) { return !e.archived && e.content && e.content.trim().length > 10; });
+    if (pool.length < 2) return null;
+    var shuffled = pool.slice().sort(function() { return Math.random() - 0.5; });
+    var a = shuffled[0]; var b = shuffled[1];
+    var id = "contrast_" + (++_contrastCardId);
+    var aPreview = a.content.length > 100 ? a.content.slice(0,100) + "..." : a.content;
+    var bPreview = b.content.length > 100 ? b.content.slice(0,100) + "..." : b.content;
+    return '<div class="contrast-card" id="' + id + '">' +
+        '<div class="contrast-header"><span class="contrast-label">CONTRAST</span>' +
+        '<button class="contrast-skip" onclick="advanceDeck()">SKIP</button></div>' +
+        '<div class="contrast-entries">' +
+            '<div class="contrast-entry"><div class="contrast-entry-label">A</div>' + escHtml(aPreview) + '</div>' +
+            '<div class="contrast-entry"><div class="contrast-entry-label">B</div>' + escHtml(bPreview) + '</div>' +
+        '</div>' +
+        '<div class="contrast-input-row">' +
+            '<textarea class="contrast-textarea" id="' + id + '-input" placeholder="what is the key difference?" rows="1" oninput="cardTextareaResize(this)"></textarea>' +
+            '<button class="contrast-send" id="' + id + '-send" disabled onclick="submitTwoEntry(&#39;contrast&#39;,&#39;' + id + '&#39;,&#39;' + a.id + '&#39;,&#39;' + b.id + '&#39;)">↑</button>' +
+        '</div></div>';
+}
+
+/* ── BRIDGE card ── */
+function buildBridgeCard() {
+    var pool = ARCHIVE.entries.filter(function(e) { return !e.archived && e.content && e.content.trim().length > 10; });
+    if (pool.length < 2) return null;
+    var shuffled = pool.slice().sort(function() { return Math.random() - 0.5; });
+    var a = shuffled[0]; var b = shuffled[1];
+    var id = "bridge_" + (++_bridgeCardId);
+    var aPreview = a.content.length > 100 ? a.content.slice(0,100) + "..." : a.content;
+    var bPreview = b.content.length > 100 ? b.content.slice(0,100) + "..." : b.content;
+    return '<div class="bridge-card" id="' + id + '">' +
+        '<div class="bridge-header"><span class="bridge-label">BRIDGE</span>' +
+        '<button class="bridge-skip" onclick="advanceDeck()">SKIP</button></div>' +
+        '<div class="bridge-entries">' +
+            '<div class="bridge-entry"><div class="bridge-entry-label">A</div>' + escHtml(aPreview) + '</div>' +
+            '<div class="bridge-connector">⟷</div>' +
+            '<div class="bridge-entry"><div class="bridge-entry-label">B</div>' + escHtml(bPreview) + '</div>' +
+        '</div>' +
+        '<div class="bridge-input-row">' +
+            '<textarea class="bridge-textarea" id="' + id + '-input" placeholder="how are these connected?" rows="1" oninput="cardTextareaResize(this)"></textarea>' +
+            '<button class="bridge-send" id="' + id + '-send" disabled onclick="submitTwoEntry(&#39;bridge&#39;,&#39;' + id + '&#39;,&#39;' + a.id + '&#39;,&#39;' + b.id + '&#39;)">↑</button>' +
+        '</div></div>';
+}
+
+/* Shared handler for CONTRAST + BRIDGE */
+function cardTextareaResize(el) {
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 80) + "px";
+    var sendId = el.id.replace("-input", "-send");
+    var btn = document.getElementById(sendId);
+    if (btn) btn.disabled = !el.value.trim();
+}
+
+function twoEntryResize(el, sendId) {
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 80) + "px";
+    var btn = document.getElementById(sendId);
+    if (btn) btn.disabled = !el.value.trim();
+}
+
+function auditResize(el, sendId) {
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 80) + "px";
+    var btn = document.getElementById(sendId);
+    if (btn) btn.disabled = !el.value.trim();
+}
+
+function submitTwoEntry(cardType, cardId, aId, bId) {
+    var input = document.getElementById(cardId + "-input");
+    if (!input || !input.value.trim()) return;
+    var text = input.value.trim();
+    var aEntry = ARCHIVE.entries.find(function(e) { return e.id === aId; });
+    var bEntry = ARCHIVE.entries.find(function(e) { return e.id === bId; });
+    var key = cardType + "s"; // "contrasts" or "bridges"
+    if (aEntry) {
+        if (!aEntry.meta) aEntry.meta = {};
+        if (!aEntry.meta[key]) aEntry.meta[key] = [];
+        aEntry.meta[key].push({ withId: bId, note: text, at: Date.now() });
+    }
+    if (bEntry) {
+        if (!bEntry.meta) bEntry.meta = {};
+        if (!bEntry.meta[key]) bEntry.meta[key] = [];
+        bEntry.meta[key].push({ withId: aId, note: text, at: Date.now() });
+    }
+    save();
+    advanceDeck();
+}
+
+/* ── AUDIT card ── */
+function buildAuditCard() {
+    var pool = ARCHIVE.entries.filter(function(e) { return !e.archived; })
+        .sort(function(a,b) { return b.createdAt - a.createdAt; });
+    if (pool.length < 3) return null;
+    var picks = pool.slice(0, 6 + Math.floor(Math.random() * 2)); // 6-7
+    var id = "audit_" + (++_auditCardId);
+    var itemsHtml = picks.map(function(e) {
+        var preview = e.content.length > 80 ? e.content.slice(0,80) + "..." : e.content;
+        return '<div class="audit-entry-item">' + escHtml(preview) + '</div>';
+    }).join("");
+    return '<div class="audit-card" id="' + id + '">' +
+        '<div class="audit-header"><span class="audit-label">AUDIT · RECENT</span>' +
+        '<button class="audit-skip" onclick="advanceDeck()">SKIP</button></div>' +
+        '<div class="audit-entries">' + itemsHtml + '</div>' +
+        '<div class="audit-input-row">' +
+            '<textarea class="audit-textarea" id="' + id + '-input" placeholder="what is the theme?" rows="1" oninput="cardTextareaResize(this)"></textarea>' +
+            '<button class="audit-send" id="' + id + '-send" disabled onclick="submitAudit(&#39;' + id + '&#39;)">↑</button>' +
+        '</div></div>';
+}
+
+function submitAudit(cardId) {
+    var input = document.getElementById(cardId + "-input");
+    if (!input || !input.value.trim()) return;
+    var entry = {
+        id: uid(), type: "THOUGHT", content: input.value.trim(),
+        createdAt: Date.now(), updatedAt: Date.now(),
+        linkedStat: null, linkedEntity: null, linkedQuest: null,
+        mainTag: null, subtags: [], suggesterSeen: true,
+        tags: [], resolved: false, resolvedAt: null,
+        parentId: null, children: [], surfaceCount: 0,
+        lastSurfaced: null, snoozedUntil: null, pinned: false,
+        archived: false, versions: [], meta: { source: "AUDIT" }
+    };
+    ARCHIVE.entries.unshift(entry);
+    save(); updateCount();
+    advanceDeck();
+}
+
+/* ── MOMENTUM card ── */
+var MOMENTUM_DAYS = 15;
+function buildMomentumCard() {
+    var now   = Date.now();
+    var counts = [];
+    var total  = 0;
+    for (var i = MOMENTUM_DAYS - 1; i >= 0; i--) {
+        var dayStart = now - (i + 1) * 86400000;
+        var dayEnd   = now - i * 86400000;
+        var c = ARCHIVE.entries.filter(function(e) {
+            return !e.archived && e.createdAt >= dayStart && e.createdAt < dayEnd;
+        }).length;
+        counts.push(c);
+        total += c;
+    }
+    if (total === 0) return null;
+    var maxCount = Math.max.apply(null, counts) || 1;
+    var bars = counts.map(function(c, i) {
+        var pct    = Math.round((c / maxCount) * 100);
+        var active = i === MOMENTUM_DAYS - 1 ? " active" : "";
+        return '<div class="momentum-bar' + active + '" style="height:' + Math.max(3, pct) + '%"></div>';
+    }).join("");
+    var startDate = new Date(now - MOMENTUM_DAYS * 86400000);
+    var startStr  = (startDate.getMonth()+1) + "/" + startDate.getDate();
+    var endStr    = "today";
+    return '<div class="momentum-card">' +
+        '<div class="momentum-header"><span class="momentum-label">MOMENTUM · 15 DAYS</span></div>' +
+        '<div class="momentum-body">' +
+            '<div class="momentum-chart">' + bars + '</div>' +
+            '<div class="momentum-labels">' +
+                '<span class="momentum-label-start">' + startStr + '</span>' +
+                '<span class="momentum-label-end">' + endStr + '</span>' +
+            '</div>' +
+            '<div class="momentum-total">' + total + ' ENTRIES THIS PERIOD</div>' +
+        '</div>' +
+    '</div>';
+}
+
+function buildSlopSystemCard() {
+    return '<div class="slop-card">' +
+        '<div class="slop-image-frame">' +
+            '<div class="slop-image-placeholder"></div>' +
+        '</div>' +
+        '<div class="slop-caption">' + escHtml(getSlop()) + '</div>' +
+    '</div>';
+}
+
+/* ── SECRET library ── */
+const SECRETS = {
+    YOURSELF: [
+        "The version of you that exists in other people's minds is mostly their own projection.",
+        "You make most decisions before you think you do. The thinking is often justification.",
+        "The things you find most annoying in others are usually things you suppress in yourself.",
+        "Your taste is already more developed than your ability. That gap is why you feel stuck.",
+        "The inner voice criticizing you borrowed its tone from someone specific. You know who.",
+        "Most of your beliefs about what you're capable of were formed before you were 16.",
+        "You are more consistent than you think. Others have noticed patterns in you that you haven't.",
+        "The story you tell about why something failed protects a belief you're not ready to question.",
+        "Your best ideas come at the same time of day every time. You already know when that is.",
+        "The thing you keep almost doing is the thing you actually want.",
+    ],
+    THE_WORLD: [
+        "Octopuses have three hearts. Two pump blood to the gills. One pumps it to the body. It stops when they swim.",
+        "The universe is not expanding into anything. Space itself is stretching.",
+        "Trees in a forest share nutrients through fungal networks. They preferentially feed their own offspring.",
+        "Your body replaces most of its atoms every few years. You are a pattern, not a substance.",
+        "Humans are the only animals known to blush. Darwin called it the most peculiar and most human of all expressions.",
+        "The brain cannot feel pain. It has no pain receptors. Headaches come from surrounding tissues.",
+        "Cleopatra lived closer in time to the Moon landing than to the construction of the Great Pyramid.",
+        "There are more possible chess games than atoms in the observable universe.",
+        "Crows recognize human faces and hold grudges. They also teach other crows who to distrust.",
+        "The placebo effect works even when people know it's a placebo. Ritual has power independent of belief.",
+    ],
+    THIS_SYSTEM: [
+        "Your BODY rank is the floor of the average of your three sub-stat tiers, not the highest.",
+        "The dealer rolls a new card every time you swipe. The pool is never fully predetermined.",
+        "SLOP cards have a 12% chance of appearing in any given slot.",
+        "Entries you resolve still exist in the archive. Nothing is ever truly deleted.",
+        "The TAG_SUGGESTER shows 4 randomly selected subtags from a predefined pool. Shuffle reveals the rest.",
+        "Readiness decays 15 points per missed day. It takes one quest to recover 30.",
+        "The REFLECTION card has a 6-hour cooldown. It only picks entries at least 3 days old.",
+        "Your quest board is frozen at midnight and cannot change until the next tick.",
+        "PATTERN detection fires when 3 or more entries share the same subtag.",
+        "The Archive and Sovereign OS use separate storage keys. They don't share data yet.",
+    ]
+};
+
+
+function buildSecretCard() {
+    var id = "secret_" + (++_secretCardId);
+    var q = id;
+    return [
+        '<div class="secret-card" id="', q, '">',
+        '<div class="secret-header"><span class="secret-label">TELL ME A SECRET</span></div>',
+        '<div class="secret-prompt" id="', q, '-prompt">Choose a category.</div>',
+        '<div class="secret-categories" id="', q, '-cats">',
+        '<button class="secret-cat-btn" onclick="revealSecret(&#39;', q, '&#39;,&#39;YOURSELF&#39;)">YOURSELF</button>',
+        '<button class="secret-cat-btn" onclick="revealSecret(&#39;', q, '&#39;,&#39;THE_WORLD&#39;)">THE WORLD</button>',
+        '<button class="secret-cat-btn" onclick="revealSecret(&#39;', q, '&#39;,&#39;THIS_SYSTEM&#39;)">THIS SYSTEM</button>',
+        '</div></div>'
+    ].join("");
+}
+
+function revealSecret(cardId, category) {
+    var pool   = SECRETS[category];
+    if (!pool) return;
+    var secret = pool[Math.floor(Math.random() * pool.length)];
+    var card   = document.getElementById(cardId);
+    if (!card) return;
+    var prompt = card.querySelector(".secret-prompt");
+    var cats   = card.querySelector(".secret-categories");
+    if (prompt) prompt.remove();
+    if (cats)   cats.remove();
+    var reveal = document.createElement("div");
+    reveal.className = "secret-reveal";
+    reveal.innerHTML = '<div class="secret-reveal-cat">' + category.replace("_"," ") + '</div>' + escHtml(secret);
+    card.appendChild(reveal);
+}
+
+/* ── STATUS_ENTRY prompt pool ── */
+const STATUS_PROMPTS = [
+    // Introspective
+    "What's taking up the most mental space right now?",
+    "What's something you've been avoiding thinking about?",
+    "What would you do differently if you started today over?",
+    "What's a belief you've been questioning lately?",
+    "When did you last feel fully in control? What was different?",
+    "What's draining you right now that you haven't named yet?",
+    // Relational
+    "Who have you been meaning to reach out to?",
+    "Who has shown up for you recently that you haven't acknowledged?",
+    "Is there a conversation you've been putting off?",
+    "Who are you thinking about right now and why?",
+    // Observational
+    "What's something you noticed today that surprised you?",
+    "What's a pattern you've been seeing repeat lately?",
+    "What's something you overheard or read that stuck with you?",
+    "What's changed around you that you haven't fully processed?",
+    // Forward-looking
+    "What do you want to remember about this week?",
+    "What's one thing you want to do before the week ends?",
+    "What would make tomorrow feel like a win?",
+    "What opportunity are you sitting on that you haven't acted on?",
+    // Retrospective
+    "What's something you handled well recently?",
+    "What's a small thing that went better than expected?",
+    "What did you learn this week that you didn't know before?",
+    "What's something worth being proud of right now?",
+    // Position / ambition
+    "What's the most important thing you could do for your future self this week?",
+    "What's a skill gap you've noticed recently?",
+    "What's something in your environment that's affecting your output?",
+    // Body / energy
+    "How is your body feeling right now, honestly?",
+    "When did you last feel fully rested? What made that possible?",
+    "What's your energy been like today and why?"
+];
+
+const STATUS_ENTRY_INTERVAL = 20; // inject one every N pool items
+let _promptsUsed = [];
+
+function getRandomPrompt() {
+    // Avoid repeating prompts until all are used
+    if (_promptsUsed.length >= STATUS_PROMPTS.length) _promptsUsed = [];
+    const remaining = STATUS_PROMPTS.filter(p => !_promptsUsed.includes(p));
+    const pick = remaining[Math.floor(Math.random() * remaining.length)];
+    _promptsUsed.push(pick);
+    return pick;
+}
+
+/* ── Subtag database ── */
+const SUBTAG_DB = {
+    PERSON:   ["#family","#friend","#classmate","#colleague","#mentor","#professor","#acquaintance","#online","#recurring","#fading"],
+    PLACE:    ["#campus","#home","#gym","#library","#social","#work","#outdoor","#travel","#discovered","#recurring"],
+    THING:    ["#tool","#resource","#book","#media","#gear","#app","#document","#project","#want","#own"],
+    IDEA:     ["#theory","#creative","#strategy","#insight","#hypothesis","#framework","#connection","#halfbaked","#urgent","#revisit"],
+    TASK:     ["#today","#thisweek","#someday","#blocked","#delegated","#waiting","#recurring","#quick","#deep","#urgent"],
+    QUESTION: ["#unanswered","#research","#personal","#philosophical","#technical","#social","#career","#revisit","#answered","#partial"]
+};
+
+const SUBTAG_DISPLAY = 4; // how many subtags to show at once
+
+function getSubtagSuggestions(mainTag) {
+    const pool = SUBTAG_DB[mainTag] || [];
+    if (pool.length <= SUBTAG_DISPLAY) return [...pool];
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, SUBTAG_DISPLAY);
+}
+
+/* ── Storage ── */
+const SAVE_KEY = "sovereign_archive_v1";
+let ARCHIVE = { version:1, entries:[] };
+
+function save() {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(ARCHIVE)); } catch(e) {}
+}
+function load() {
+    try {
+        const s = JSON.parse(localStorage.getItem(SAVE_KEY));
+        if (s && s.version === 1) ARCHIVE = s;
+    } catch(e) {}
+}
+
+/* ── Types ── */
+const CONTENT_TYPES = [
+    "THOUGHT","LEARNING","QUESTION","DEADLINE",
+    "OPEN_LOOP","WIN","SIGNAL","WORRY","STATUS"
+];
+
+const TYPE_LABELS = {
+    TIME_CAPSULE: "CAPSULE",
+    PREDICTION:   "PREDICTION",
+    UNSORTED:  "UNSORTED",
+    THOUGHT:   "THOUGHT",
+    LEARNING:  "LEARNING",
+    QUESTION:  "QUESTION",
+    DEADLINE:  "DEADLINE",
+    OPEN_LOOP: "OPEN LOOP",
+    WIN:       "WIN",
+    SIGNAL:    "SIGNAL",
+    WORRY:     "WORRY",
+    STATUS:    "STATUS"
+};
+
+/* ── Helpers ── */
+function uid() {
+    return "arc_" + Date.now() + "_" + Math.random().toString(36).slice(2,6);
+}
+
+function timeAgo(ts) {
+    const s = Math.floor((Date.now() - ts) / 1000);
+    if (s < 60)   return "just now";
+    if (s < 3600) return Math.floor(s/60) + "m ago";
+    if (s < 86400)return Math.floor(s/3600) + "h ago";
+    return Math.floor(s/86400) + "d ago";
+}
+
+function deadlineDisplay(ts) {
+    const ms = ts - Date.now();
+    if (ms < 0) return { text: "OVERDUE", cls: "urgent" };
+    const h = Math.floor(ms/3600000);
+    const d = Math.floor(ms/86400000);
+    if (h < 24) return { text: h + "h remaining", cls: "urgent" };
+    if (d < 4)  return { text: d + "d remaining", cls: "soon" };
+    return { text: d + "d remaining", cls: "ok" };
+}
+
+function escHtml(s) {
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+/* ── Surface weight ── */
+function surfaceWeight(e) {
+    let w = Math.random() * 60;
+    const daysSince = (Date.now() - (e.lastSurfaced || e.createdAt)) / 86400000;
+    w += daysSince * 12;
+    if (e.type === "UNSORTED") w += 35;
+    if (e.pinned) w += 300;
+    if (e.deadline) {
+        const ms = e.deadline - Date.now();
+        const days = ms / 86400000;
+        if (days < 1) w += 500;
+        else if (days < 3) w += 150;
+        else if (days < 7) w += 60;
+    }
+    w -= (e.surfaceCount || 0) * 3;
+    return w;
+}
+
+/* ── Deck state ── */
+const DECK_SIZE = 3;
+let _filter     = "ALL";
+let _deck       = [];   // cards on screen
+let _entryQueue = [];   // weighted archive entries, refills when empty
+let _swipeStartY    = null;
+let _swipeStartTime = null;
+let _swiping        = false;
+// Card counter IDs
+let _statusCardId   = 0;
+let _capsuleId      = 0;
+let _predId         = 0;
+let _secretCardId   = 0;
+let _twinCardId     = 0;
+let _contrastCardId = 0;
+let _bridgeCardId   = 0;
+let _auditCardId    = 0;
+
+function setFilter(btn) {
+    var newFilter = btn.dataset.filter;
+    document.querySelectorAll(".filter-btn").forEach(function(b) { b.classList.remove("active"); });
+    btn.classList.add("active");
+    if (newFilter === _filter) return; // same tab — no reset
+    _filter = newFilter;
+    initDeck();
+}
+
+/* ── Card Dealer ── */
+const DEALER_RULES = [
+    { type: "SLOP",          weight: 0.12, condition: function() { return _filter === "ALL"; } },
+    { type: "TWIN",          weight: 0.02, condition: function() { return _filter === "ALL" && ARCHIVE.entries.filter(function(e){ return !e.archived && e.content && e.content.trim().length > 10; }).length >= 4; } },
+    { type: "CONTRAST",      weight: 0.02, condition: function() { return _filter === "ALL" && ARCHIVE.entries.filter(function(e){ return !e.archived && e.content && e.content.trim().length > 10; }).length >= 2; } },
+    { type: "BRIDGE",        weight: 0.02, condition: function() { return _filter === "ALL" && ARCHIVE.entries.filter(function(e){ return !e.archived && e.content && e.content.trim().length > 10; }).length >= 2; } },
+    { type: "AUDIT",         weight: 0.01, condition: function() { return _filter === "ALL" && ARCHIVE.entries.filter(function(e){ return !e.archived; }).length >= 3; } },
+    { type: "MOMENTUM",      weight: 0.01, condition: function() { return _filter === "ALL"; } },
+    { type: "QUOTE",         weight: 0.03, condition: function() { return _filter === "ALL"; } },
+    { type: "PROMPT",        weight: 0.02, condition: function() { return _filter === "ALL"; } },
+    { type: "SECRET",        weight: 0.03, condition: function() { return _filter === "ALL"; } },
+    { type: "STATUS_ENTRY",  weight: 0.04, condition: function() { return _filter === "ALL"; } },
+    { type: "TIME_CAPSULE",  weight: 0.02, condition: function() { return _filter === "ALL"; } },
+    { type: "PREDICTION",    weight: 0.02, condition: function() { return _filter === "ALL"; } },
+    { type: "REFLECTION",    weight: 0.01, condition: function() { return _filter === "ALL" && shouldShowReflection() && !!pickReflectionEntry(); } },
+    { type: "PATTERN",       weight: 0.01, condition: function() { return _filter === "ALL" && detectPatterns().length > 0; } }
+    // remaining ~75% = entry cards
+];
+
+function buildFilteredEntryQueue() {
+    var entries = ARCHIVE.entries.filter(function(e) {
+        if (e.archived) return false;
+        if (e.snoozedUntil && Date.now() < e.snoozedUntil) return false;
+        if (_filter === "PINNED"   && !e.pinned)                              return false;
+        if (_filter === "UNSORTED" && (e.type !== "UNSORTED" || e.resolved))  return false;
+        if (_filter === "DEADLINE" && (e.type !== "DEADLINE" || e.resolved))  return false;
+        return true;
+    });
+    return entries
+        .map(function(e) { return { e: e, w: surfaceWeight(e) }; })
+        .sort(function(a, b) { return b.w - a.w; })
+        .map(function(x) { return x.e; });
+}
+
+/* Deal one card — called every time a card is dismissed */
+function dealOneCard() {
+    // Refill entry queue if empty
+    if (_entryQueue.length === 0) {
+        _entryQueue = buildFilteredEntryQueue();
+    }
+
+    // Roll dealer
+    var roll = Math.random();
+    var cumulative = 0;
+    for (var i = 0; i < DEALER_RULES.length; i++) {
+        var rule = DEALER_RULES[i];
+        cumulative += rule.weight;
+        if (roll < cumulative) {
+            if (!rule.condition()) break; // condition failed → entry card
+            var sys = buildSystemCard(rule.type);
+            if (sys) return Array.isArray(sys) ? sys : [sys];
+            break;
+        }
+    }
+
+    // Entry card
+    if (_entryQueue.length === 0) {
+        return [{ html: buildSlopSystemCard(), id: "slop_fallback_" + Date.now() }];
+    }
+    var e = _entryQueue.shift();
+    e.lastSurfaced = Date.now();
+    e.surfaceCount = (e.surfaceCount || 0) + 1;
+    var items = [{ html: buildCard(e), id: e.id }];
+    if (e.mainTag && !e.suggesterSeen && !e.parentId) {
+        var sc = buildSuggesterCard(e);
+        if (sc) items.push({ html: sc, id: "sug_" + e.id });
+    }
+    return items;
+}
+
+function dealSlot(entryQueue) {
+    // Legacy alias used by buildSlopCard — just deal one card
+    return dealOneCard();
+}
+
+function buildSystemCard(type) {
+    switch (type) {
+        case "SLOP":          return { html: buildSlopSystemCard(),   id: "slop_"   + Date.now() };
+        case "TWIN":          { var tw = buildTwinCard();     return tw ? { html: tw,  id: "twin_"     + Date.now() } : null; }
+        case "CONTRAST":      { var ct = buildContrastCard();  return ct ? { html: ct,  id: "contrast_" + Date.now() } : null; }
+        case "BRIDGE":        { var br = buildBridgeCard();    return br ? { html: br,  id: "bridge_"   + Date.now() } : null; }
+        case "AUDIT":         { var au = buildAuditCard();     return au ? { html: au,  id: "audit_"    + Date.now() } : null; }
+        case "MOMENTUM":      { var mo = buildMomentumCard();  return mo ? { html: mo,  id: "momentum_" + Date.now() } : null; }
+        case "QUOTE":         return { html: buildQuoteCard(),   id: "quote_"  + Date.now() };
+        case "PROMPT":        return { html: buildPromptCard(),  id: "prompt_" + Date.now() };
+        case "SECRET":        return { html: buildSecretCard(),       id: "secret_" + Date.now() };
+        case "STATUS_ENTRY":  return { html: buildStatusEntryCard(),  id: "se_"     + Date.now() };
+        case "TIME_CAPSULE":  return { html: buildTimeCapsuleCard(),  id: "tc_"     + Date.now() };
+        case "PREDICTION":    return { html: buildPredictionCard(),   id: "pred_"   + Date.now() };
+        case "REFLECTION": {
+            const e = pickReflectionEntry();
+            if (!e) return null;
+            markReflectionShown();
+            return { html: buildReflectionCard(e), id: "ref_" + e.id };
+        }
+        case "PATTERN": {
+            const patterns = detectPatterns();
+            if (!patterns.length) return null;
+            const { tag, entries: pe } = patterns[0];
+            return { html: buildPatternCard(tag, pe), id: "pat_" + tag };
+        }
+        default: return null;
+    }
+}
+
+function buildSlopCard(entryQueue) {
+    // no longer called directly — dealOneCard handles entry cards
+    // kept as alias for any legacy references
+    return dealOneCard();
+}
+
+/* Initialize deck — deal DECK_SIZE cards on demand */
+function initDeck() {
+    _entryQueue = buildFilteredEntryQueue();
+    _deck = [];
+    for (var i = 0; i < DECK_SIZE; i++) {
+        var cards = dealOneCard();
+        for (var j = 0; j < cards.length; j++) _deck.push(cards[j]);
+    }
+    renderDeck(false);
+    updateCount();
+}
+
+/* Render current deck to DOM */
+function renderDeck(animateBottom) {
+    var feed = document.getElementById("feed");
+    if (_deck.length === 0) {
+        feed.innerHTML = '<div class="empty-state"><p>NO ENTRIES' + (_filter !== "ALL" ? " IN THIS FILTER" : "") + '</p><p style="margin-top:8px;font-size:11px;">USE THE BAR BELOW TO CAPTURE ANYTHING</p></div>';
+        return;
+    }
+    feed.innerHTML = _deck.map(function(item, i) {
+        var isNew = animateBottom && i === _deck.length - 1;
+        return '<div class="deck-card-wrap' + (isNew ? ' card-entering' : '') + '" data-deck-idx="' + i + '">' + item.html + '</div>';
+    }).join("");
+}
+
+function updateCount() {
+    var total = ARCHIVE.entries.filter(function(e) { return !e.archived; }).length;
+    document.getElementById("entry-count").textContent = total + " ENTRIES";
+}
+
+/* advanceDeck — remove top, deal one new card to bottom */
+function advanceDeck() {
+    if (_deck.length === 0) return;
+    _deck.shift();
+    var cards = dealOneCard();
+    for (var i = 0; i < cards.length; i++) _deck.push(cards[i]);
+    renderDeck(true);
+}
+
+function renderFeed() { initDeck(); }
+
+/* ── Drag-follow swipe mechanic ── */
+function attachSwipeListeners() {} // no-op — handled by initSwipe
+
+function initSwipe() {
+    let startY    = null;
+    let currentY  = null;
+    let startTime = null;
+    let dragging  = false;
+    let topCard   = null;
+
+    function isInteractive(el) {
+        return el.closest(".capture-bar") ||
+               el.closest(".selector-sheet-bg") ||
+               el.closest(".snooze-modal-bg") ||
+               el.closest("button") ||
+               el.closest("input") ||
+               el.closest("textarea") ||
+               el.closest("select");
+    }
+
+    function getTopCard() {
+        return document.querySelector(".deck-card-wrap[data-deck-idx='0']");
+    }
+
+    document.addEventListener("touchstart", e => {
+        if (isInteractive(e.target)) return;
+        topCard   = getTopCard();
+        if (!topCard) return;
+        startY    = e.touches[0].clientY;
+        currentY  = startY;
+        startTime = Date.now();
+        dragging  = false; // confirmed on first upward move
+    }, { passive: true });
+
+    document.addEventListener("touchmove", function(e) {
+        if (!topCard || startY === null) return;
+        currentY = e.touches[0].clientY;
+        var dy = startY - currentY;
+        // Only engage drag on upward movement
+        if (dy <= 0) { dragging = false; return; }
+        dragging = true;
+        var moved   = dy * 0.65;
+        var opacity = Math.max(0.4, 1 - moved / 400);
+        topCard.style.transform = "translateY(calc(-50% - " + moved + "px))";
+        topCard.style.opacity   = opacity;
+    }, { passive: true });
+
+    document.addEventListener("touchend", function(e) {
+        if (!dragging || !topCard) { dragging = false; return; }
+        var dy       = startY - e.changedTouches[0].clientY;
+        var dt       = Date.now() - startTime;
+        var velocity = dy / dt;
+
+        if (dy > 80 || (velocity > 0.45 && dy > 25)) {
+            if (topCard.dataset.dismissing) return; // already dismissing
+            topCard.dataset.dismissing = "1";
+            topCard.style.transition = "transform 0.28s cubic-bezier(0.4,0,0.6,1), opacity 0.28s ease";
+            topCard.style.transform  = "translateY(calc(-50% - 110vh))";
+            topCard.style.opacity    = "0";
+            setTimeout(function() { advanceDeck(); }, 260);
+        } else {
+            topCard.style.transition = "transform 0.25s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.25s ease";
+            topCard.style.transform  = "translateY(-50%)";
+            topCard.style.opacity    = "1";
+            setTimeout(function() {
+                if (topCard) {
+                    topCard.style.transition = "";
+                    topCard.style.transform  = "";
+                    topCard.style.opacity    = "";
+                }
+            }, 260);
+        }
+
+        dragging = false;
+        topCard  = null;
+        startY   = null;
+        currentY = null;
+    }, { passive: true });
+
+}  // end initSwipe
+
+/* Alias renderFeed → initDeck for backwards compat with action buttons */
+
+function buildCard(e) {
+    const typeLabel = TYPE_LABELS[e.type] || e.type;
+    const typeCls   = "type-" + e.type;
+    const children  = ARCHIVE.entries.filter(c => c.parentId === e.id && !c.archived);
+
+    let deadlineHtml = "";
+    if (e.type === "DEADLINE" && (e.meta && e.meta.deadline)) {
+        const dl = deadlineDisplay(e.meta.deadline);
+        const stakes = e.meta.stakes ? `<span class="deadline-stakes">${e.meta.stakes}</span>` : "";
+        deadlineHtml = `<div class="entry-deadline">
+            <span class="deadline-timer ${dl.cls}">${dl.text}</span>
+            ${stakes}
+        </div>`;
+    }
+
+    const versionsHtml = (e.versions && e.versions.length) > 0
+        ? `<div class="entry-versions" onclick="toggleVersions('${e.id}')">
+            ${e.versions.length} EDIT${e.versions.length > 1 ? "S" : ""} — TAP TO VIEW
+           </div>`
+        : "";
+
+    const childrenHtml = children.length > 0
+        ? `<div class="entry-children">
+            ${children.map(c => `<div class="child-entry">
+                <span class="child-dot">›</span>
+                <span>${escHtml(c.content)}</span>
+            </div>`).join("")}
+           </div>`
+        : "";
+
+    const statTag    = e.linkedStat ? `<span class="entry-stat-tag">${e.linkedStat}</span>` : "";
+    const mainTagEl  = e.mainTag   ? `<span class="entry-maintag">${e.mainTag}</span>` : "";
+    const promptEl   = (e.meta && e.meta.prompt) ? `<div style="font-size:10px;color:var(--muted);font-style:italic;padding:0 16px 6px;letter-spacing:0.3px;border-bottom:1px solid var(--border);margin-bottom:4px;">${escHtml(e.meta.prompt)}</div>` : "";
+
+    // TIME_CAPSULE — show sealed or revealed version
+    if (e.type === "TIME_CAPSULE") {
+        const openAt  = (e.meta && e.meta.openAt) ? e.meta.openAt : 0;
+        const isOpen  = Date.now() >= openAt;
+        const openDate = new Date(openAt).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+        if (!isOpen) {
+            return `<div class="entry-card" data-id="${e.id}">
+                <div class="capsule-sealed">
+                    <span class="capsule-sealed-icon">⬡</span>
+                    <span class="capsule-sealed-label">TIME CAPSULE · SEALED</span>
+                    <span class="capsule-sealed-date">opens ${openDate}</span>
+                </div>
+            </div>`;
+        }
+        // Revealed
+        return `<div class="entry-card" data-id="${e.id}">
+            <div class="capsule-reveal-banner">⬡ TIME CAPSULE · OPENED ${openDate}</div>
+            <div class="entry-top">
+                <span class="entry-time">${timeAgo(e.createdAt)}</span>
+            </div>
+            <div class="entry-content">${escHtml(e.content)}</div>
+            <div class="entry-actions">
+                <button class="act-btn pin-btn" onclick="togglePin('${e.id}')">PIN</button>
+                <button class="act-btn resolve" onclick="toggleResolve('${e.id}')">ARCHIVE</button>
+            </div>
+        </div>`;
+    }
+
+    // PREDICTION — show verify banner if past due
+    const predVerifyBanner = (e.type === "PREDICTION" && (e.meta && e.meta.verifyAt) && Date.now() >= e.meta.verifyAt && !e.meta.verified)
+        ? `<div class="prediction-verify">
+            <div class="prediction-verify-label">VERIFY PREDICTION</div>
+            <div class="prediction-verify-btns">
+                <button class="pred-verify-btn yes"     onclick="verifyPrediction('${e.id}','YES')">CORRECT</button>
+                <button class="pred-verify-btn partial" onclick="verifyPrediction('${e.id}','PARTIAL')">PARTIAL</button>
+                <button class="pred-verify-btn no"      onclick="verifyPrediction('${e.id}','NO')">WRONG</button>
+                <button class="pred-verify-btn skip"    onclick="toggleResolve('${e.id}')">SKIP</button>
+            </div>
+          </div>`
+        : "";
+
+    const predDateTag = e.type === "PREDICTION" && (e.meta && e.meta.verifyAt)
+        ? `<span style="font-size:9px;font-family:Share Tech Mono,monospace;color:${Date.now() > e.meta.verifyAt ? "var(--red)" : "var(--gold)"};border:1px solid;border-color:${Date.now() > e.meta.verifyAt ? "rgba(232,77,77,0.4)" : "rgba(240,192,64,0.4)"};padding:2px 6px;border-radius:2px;">verify ${new Date(e.meta.verifyAt).toLocaleDateString("en-US",{month:"short",day:"numeric"})}</span>`
+        : "";
+    const subtagsEl  = (e.subtags && e.subtags.length)
+        ? `<div class="entry-subtags">${e.subtags.map(t => `<span class="subtag-display">${escHtml(t)}</span>`).join("")}</div>`
+        : "";
+
+    const pinIcon = e.pinned ? `<span class="entry-pin">⬤</span>` : "";
+
+    const resolveLabel = e.resolved ? "UNRESOLVE" : "RESOLVE";
+
+    return `<div class="entry-card ${e.pinned?"pinned":""} ${e.resolved?"resolved":""}" data-id="${e.id}">
+        <div class="entry-top">
+            <span class="entry-type-tag ${typeCls}">${typeLabel}</span>
+            ${mainTagEl}
+            ${statTag}
+            ${predDateTag}
+            ${pinIcon}
+            <span class="entry-time">${timeAgo(e.createdAt)}</span>
+        </div>
+        ${promptEl}
+        <div class="entry-content">${escHtml(e.content)}</div>
+        ${predVerifyBanner}
+        ${subtagsEl}
+        ${deadlineHtml}
+        ${versionsHtml}
+        ${childrenHtml}
+        <div class="followup-area" id="fu-${e.id}">
+            <input class="followup-input" placeholder="add a follow-up..." id="fu-input-${e.id}">
+            <button class="followup-send" onclick="saveFollowUp('${e.id}')">ADD</button>
+        </div>
+        <div class="entry-actions">
+            <button class="act-btn" onclick="toggleFollowUp('${e.id}')">+ FOLLOW UP</button>
+            ${e.type === "UNSORTED" ? `<button class="act-btn" onclick="openSelector('${e.id}')">SORT</button>` : ""}
+            <button class="act-btn pin-btn" onclick="togglePin('${e.id}')">${e.pinned?"UNPIN":"PIN"}</button>
+            <button class="act-btn snooze" onclick="openSnooze('${e.id}')">SNOOZE</button>
+            <button class="act-btn resolve" onclick="toggleResolve('${e.id}')">${resolveLabel}</button>
+            <button class="act-btn delete" onclick="archiveEntry('${e.id}')">REMOVE</button>
+        </div>
+    </div>`;
+}
+
+function buildStatusEntryCard() {
+    const prompt = getRandomPrompt();
+    const cardId = "se_" + (++_statusCardId);
+    return `<div class="status-entry-card" id="${cardId}">
+        <div class="status-entry-header">
+            <span class="status-entry-label">STATUS_ENTRY</span>
+            <button class="status-entry-skip" onclick="skipStatusEntry('${cardId}')">SKIP</button>
+        </div>
+        <div class="status-entry-prompt">${escHtml(prompt)}</div>
+        <div class="status-entry-input-row">
+            <textarea
+                class="status-entry-textarea"
+                id="${cardId}-input"
+                placeholder="type your response..."
+                rows="1"
+                oninput="seResize(this)"
+                onkeydown="seKey(event,'${cardId}','${escHtml(prompt)}')"
+            ></textarea>
+            <button class="status-entry-send" id="${cardId}-send" disabled
+                onclick="submitStatusEntry('${cardId}','${escHtml(prompt)}')">↑</button>
+        </div>
+    </div>`;
+}
+
+function seResize(el) {
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 100) + "px";
+    const cardId = el.id.replace("-input","");
+    const btn = document.getElementById(cardId + "-send");
+    if (btn) btn.disabled = !el.value.trim();
+}
+
+function seKey(e, cardId, prompt) {
+    if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        submitStatusEntry(cardId, prompt);
+    }
+}
+
+function submitStatusEntry(cardId, prompt) {
+    const input = document.getElementById(cardId + "-input");
+    if (!input || !input.value.trim()) return;
+
+    const entry = {
+        id:           uid(),
+        type:         "STATUS",
+        content:      input.value.trim(),
+        createdAt:    Date.now(),
+        updatedAt:    Date.now(),
+        linkedStat:   null,
+        linkedEntity: null,
+        linkedQuest:  null,
+        mainTag:      null,
+        subtags:      [],
+        suggesterSeen:true,
+        tags:         [],
+        resolved:     false,
+        resolvedAt:   null,
+        parentId:     null,
+        children:     [],
+        surfaceCount: 0,
+        lastSurfaced: null,
+        snoozedUntil: null,
+        pinned:       false,
+        archived:     false,
+        versions:     [],
+        meta:         { prompt }
+    };
+
+    ARCHIVE.entries.unshift(entry);
+    save();
+    updateCount();
+
+    // Advance deck
+    advanceDeck();
+}
+
+function skipStatusEntry(cardId) {
+    advanceDeck();
+}
+
+/* ── TIME CAPSULE ── */
+const CAPSULE_MIN_DAYS = 14;
+const CAPSULE_MAX_DAYS = 45;
+
+function buildTimeCapsuleCard() {
+    const id = "tc_" + (++_capsuleId);
+    return `<div class="capsule-card" id="${id}">
+        <div class="capsule-header">
+            <span class="capsule-label">TIME CAPSULE</span>
+            <button class="capsule-skip" onclick="advanceDeck()">SKIP</button>
+        </div>
+        <div class="capsule-prompt">Write something to your future self.</div>
+        <div class="capsule-hint">It will be sealed and opened at a random date between 2 and 6 weeks from now.</div>
+        <div class="capsule-input-row">
+            <textarea class="capsule-textarea" id="${id}-input"
+                placeholder="dear future me..."
+                rows="1"
+                oninput="tcResize(this,'${id}')"
+                onkeydown="tcKey(event,'${id}')"></textarea>
+            <button class="capsule-send" id="${id}-send" disabled
+                onclick="submitCapsule('${id}')">↑</button>
+        </div>
+    </div>`;
+}
+
+function tcResize(el, id) {
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 100) + "px";
+    const btn = document.getElementById(id + "-send");
+    if (btn) btn.disabled = !el.value.trim();
+}
+
+function tcKey(e, id) {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitCapsule(id); }
+}
+
+function submitCapsule(id) {
+    const input = document.getElementById(id + "-input");
+    if (!input || !input.value.trim()) return;
+    const daysUntilOpen = CAPSULE_MIN_DAYS + Math.floor(Math.random() * (CAPSULE_MAX_DAYS - CAPSULE_MIN_DAYS));
+    const openAt = Date.now() + daysUntilOpen * 86400000;
+    const entry = {
+        id: uid(), type: "TIME_CAPSULE", content: input.value.trim(),
+        createdAt: Date.now(), updatedAt: Date.now(),
+        linkedStat: null, linkedEntity: null, linkedQuest: null,
+        mainTag: null, subtags: [], suggesterSeen: true,
+        tags: [], resolved: false, resolvedAt: null,
+        parentId: null, children: [],
+        surfaceCount: 0, lastSurfaced: null, snoozedUntil: null,
+        pinned: false, archived: false, versions: [],
+        meta: { openAt, daysUntilOpen }
+    };
+    ARCHIVE.entries.unshift(entry);
+    save(); updateCount();
+    advanceDeck();
+}
+
+/* ── PREDICTION ── */
+const PREDICTION_PROMPTS = [
+    "Make a prediction about something in your life.",
+    "What do you think will happen with a current situation?",
+    "Where do you think you'll be with a goal by a specific date?",
+    "What outcome do you expect from something you started recently?",
+    "What do you predict about a relationship or dynamic in your life?"
+];
+
+function buildPredictionCard() {
+    const prompt = PREDICTION_PROMPTS[Math.floor(Math.random() * PREDICTION_PROMPTS.length)];
+    const id = "pred_" + (++_predId);
+    // Default verify date = 30 days from now
+    const defaultDate = new Date(Date.now() + 30 * 86400000).toISOString().slice(0,10);
+    return `<div class="prediction-card" id="${id}">
+        <div class="prediction-header">
+            <span class="prediction-label">PREDICTION</span>
+            <button class="prediction-skip" onclick="advanceDeck()">SKIP</button>
+        </div>
+        <div class="prediction-prompt">${escHtml(prompt)}</div>
+        <div class="prediction-date-row">
+            <span class="prediction-date-label">VERIFY BY</span>
+            <input type="date" class="prediction-date-input" id="${id}-date" value="${defaultDate}">
+        </div>
+        <div class="prediction-input-row">
+            <textarea class="prediction-textarea" id="${id}-input"
+                placeholder="I predict that..."
+                rows="1"
+                oninput="predResize(this,'${id}')"
+                onkeydown="predKey(event,'${id}','${escHtml(prompt)}')"></textarea>
+            <button class="prediction-send" id="${id}-send" disabled
+                onclick="submitPrediction('${id}','${escHtml(prompt)}')">↑</button>
+        </div>
+    </div>`;
+}
+
+function predResize(el, id) {
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 100) + "px";
+    const btn = document.getElementById(id + "-send");
+    if (btn) btn.disabled = !el.value.trim();
+}
+
+function predKey(e, id, prompt) {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitPrediction(id, prompt); }
+}
+
+function submitPrediction(id, prompt) {
+    const input   = document.getElementById(id + "-input");
+    const dateEl  = document.getElementById(id + "-date");
+    if (!input || !input.value.trim()) return;
+    const verifyAt = (dateEl && dateEl.value) ? new Date(dateEl.value).getTime() : Date.now() + 30*86400000;
+    const entry = {
+        id: uid(), type: "PREDICTION", content: input.value.trim(),
+        createdAt: Date.now(), updatedAt: Date.now(),
+        linkedStat: null, linkedEntity: null, linkedQuest: null,
+        mainTag: null, subtags: [], suggesterSeen: true,
+        tags: [], resolved: false, resolvedAt: null,
+        parentId: null, children: [],
+        surfaceCount: 0, lastSurfaced: null, snoozedUntil: null,
+        pinned: false, archived: false, versions: [],
+        meta: { prompt, verifyAt, verified: null }
+    };
+    ARCHIVE.entries.unshift(entry);
+    save(); updateCount();
+    advanceDeck();
+}
+
+function verifyPrediction(entryId, result) {
+    const e = ARCHIVE.entries.find(x => x.id === entryId);
+    if (!e) return;
+    e.meta.verified  = result;  // "YES" | "NO" | "PARTIAL"
+    e.resolved       = result === "YES";
+    e.updatedAt      = Date.now();
+    save(); initDeck();
+}
+
+/* ── PATTERN detector ── */
+const PATTERN_THRESHOLD    = 3;    // min entries sharing a subtag to trigger
+const PATTERN_DISMISS_KEY  = "sovereign_archive_patterns_dismissed_v1";
+
+function getDismissedPatterns() {
+    try { return JSON.parse(localStorage.getItem(PATTERN_DISMISS_KEY) || "[]"); } catch(e) { return []; }
+}
+function dismissPattern(tag) {
+    const d = getDismissedPatterns();
+    if (!d.includes(tag)) { d.push(tag); localStorage.setItem(PATTERN_DISMISS_KEY, JSON.stringify(d)); }
+}
+
+function detectPatterns() {
+    const dismissed = getDismissedPatterns();
+    const tagMap = {};
+    for (const e of ARCHIVE.entries) {
+        if (e.archived || e.resolved) continue;
+        for (const tag of (e.subtags || [])) {
+            if (!tagMap[tag]) tagMap[tag] = [];
+            tagMap[tag].push(e);
+        }
+    }
+    return Object.entries(tagMap)
+        .filter(([tag, entries]) => entries.length >= PATTERN_THRESHOLD && !dismissed.includes(tag))
+        .map(([tag, entries]) => ({ tag, entries }));
+}
+
+function buildPatternCard(tag, entries) {
+    const samples = entries.slice(0, 3).map(e =>
+        `<div class="pattern-sample">${escHtml(e.content.slice(0,80))}${e.content.length>80?"...":""}</div>`
+    ).join("");
+    return `<div class="pattern-card">
+        <div class="pattern-header">
+            <span class="pattern-label">PATTERN DETECTED</span>
+        </div>
+        <div class="pattern-body">
+            <div class="pattern-tag">${escHtml(tag)}</div>
+            <div class="pattern-count">${entries.length} entries share this tag</div>
+            <div class="pattern-samples">${samples}</div>
+        </div>
+        <div class="pattern-actions">
+            <button class="pattern-dismiss" onclick="dismissPattern('${escHtml(tag)}');renderFeed();">DISMISS PATTERN</button>
+        </div>
+    </div>`;
+}
+
+/* ── REFLECTION generator ── */
+const REFLECTION_MIN_AGE_DAYS = 3;     // entry must be at least this old
+const REFLECTION_COOLDOWN_KEY = "sovereign_archive_reflection_ts_v1";
+const REFLECTION_COOLDOWN_MS  = 3600000 * 6; // show at most one reflection per 6h session
+
+function shouldShowReflection() {
+    try {
+        const last = parseInt(localStorage.getItem(REFLECTION_COOLDOWN_KEY) || "0");
+        return Date.now() - last > REFLECTION_COOLDOWN_MS;
+    } catch(e) { return true; }
+}
+
+function markReflectionShown() {
+    try { localStorage.setItem(REFLECTION_COOLDOWN_KEY, Date.now().toString()); } catch(e) {}
+}
+
+function pickReflectionEntry() {
+    const minAge = REFLECTION_MIN_AGE_DAYS * 86400000;
+    const candidates = ARCHIVE.entries.filter(e =>
+        !e.archived && !e.resolved && !e.parentId &&
+        (Date.now() - e.createdAt) >= minAge &&
+        e.content.trim().length > 20
+    );
+    if (candidates.length === 0) return null;
+    // Weight toward entries not recently surfaced
+    const weighted = candidates.map(e => ({
+        e,
+        w: (Date.now() - (e.lastSurfaced || e.createdAt)) / 86400000 + Math.random() * 5
+    })).sort((a,b) => b.w - a.w);
+    return weighted[0].e;
+}
+
+function daysAgoStr(ts) {
+    const d = Math.floor((Date.now() - ts) / 86400000);
+    if (d === 0) return "today";
+    if (d === 1) return "yesterday";
+    return d + " days ago";
+}
+
+function buildReflectionCard(e) {
+    const ago = daysAgoStr(e.createdAt);
+    return `<div class="reflection-card" id="reflection-${e.id}">
+        <div class="reflection-header">
+            <span class="reflection-label">REFLECTION</span>
+            <span class="reflection-ago">${ago}</span>
+        </div>
+        <div class="reflection-quote">"${escHtml(e.content.slice(0,200))}${e.content.length>200?"...":""}"</div>
+        <div class="reflection-prompt">Does this still feel relevant?</div>
+        <div class="reflection-note-area" id="ref-note-${e.id}">
+            <input class="reflection-note-input" id="ref-note-input-${e.id}" placeholder="add a note...">
+            <button class="reflection-note-send" onclick="saveReflectionNote('${e.id}')">ADD</button>
+        </div>
+        <div class="reflection-actions">
+            <button class="reflection-btn yes"  onclick="resolveReflection('${e.id}','YES')">YES</button>
+            <button class="reflection-btn no"   onclick="resolveReflection('${e.id}','NO')">NO</button>
+            <button class="reflection-btn note" onclick="toggleReflectionNote('${e.id}')">+ NOTE</button>
+            <button class="reflection-btn skip" onclick="resolveReflection('${e.id}','SKIP')">SKIP</button>
+        </div>
+    </div>`;
+}
+
+function toggleReflectionNote(entryId) {
+    const _rn = document.getElementById("ref-note-" + entryId); if(_rn) _rn.classList.toggle("open");
+    const _ri = document.getElementById("ref-note-input-" + entryId); if(_ri) _ri.focus();
+}
+
+function saveReflectionNote(parentId) {
+    const input = document.getElementById("ref-note-input-" + parentId);
+    if (!input || !input.value.trim()) return;
+    const parent = ARCHIVE.entries.find(x => x.id === parentId);
+    if (!parent) return;
+    const child = {
+        id: uid(), type: "THOUGHT", content: "[REFLECTION NOTE] " + input.value.trim(),
+        createdAt: Date.now(), updatedAt: Date.now(),
+        linkedStat: parent.linkedStat, linkedEntity: null, linkedQuest: null,
+        mainTag: parent.mainTag, subtags: [], suggesterSeen: true,
+        tags: [], resolved: false, resolvedAt: null,
+        parentId: parentId, children: [],
+        surfaceCount: 0, lastSurfaced: null, snoozedUntil: null,
+        pinned: false, archived: false, versions: [], meta: {}
+    };
+    ARCHIVE.entries.push(child);
+    if (!parent.children) parent.children = [];
+    parent.children.push(child.id);
+    input.value = "";
+    resolveReflection(parentId, "YES");
+}
+
+function resolveReflection(entryId, response) {
+    const e = ARCHIVE.entries.find(x => x.id === entryId);
+    if (e) {
+        e.lastSurfaced = Date.now();
+        e.surfaceCount = (e.surfaceCount || 0) + 1;
+        if (response === "NO") e.resolved = true;
+    }
+    save();
+    renderFeed();
+}
+
+/* ── TAG_SUGGESTER ── */
+let _suggesterState = {}; // entryId → { currentSuggestions, pendingSubtags }
+
+function buildSuggesterCard(e) {
+    if (!e.mainTag || e.suggesterSeen) return null;
+    const suggestions = getSubtagSuggestions(e.mainTag);
+    _suggesterState[e.id] = { currentSuggestions: suggestions, pendingSubtags: [] };
+
+    const chips = suggestions.map(tag =>
+        `<button class="subtag-chip" id="chip-${e.id}-${tag.slice(1)}" onclick="toggleChip('${e.id}','${tag}')">${tag}</button>`
+    ).join("");
+
+    return `<div class="suggester-card" id="suggester-${e.id}">
+        <div class="suggester-header">
+            <span class="suggester-label">TAG_SUGGESTER · ${e.mainTag}</span>
+            <button class="suggester-shuffle" onclick="shuffleSuggester('${e.id}')">↻ SHUFFLE</button>
+        </div>
+        <div class="suggester-ref">"${escHtml(e.content.slice(0,120))}${e.content.length>120?"...":""}"</div>
+        <div class="suggester-chips" id="chips-${e.id}">${chips}</div>
+        <div class="suggester-add">
+            <input class="suggester-add-input" id="add-tag-${e.id}" placeholder="+ add a tag manually">
+            <button class="suggester-add-btn" onclick="addManualTag('${e.id}')">ADD</button>
+        </div>
+        <div class="suggester-actions">
+            <button class="suggester-done" onclick="applySuggesterTags('${e.id}')">APPLY TAGS</button>
+            <button class="suggester-dismiss" onclick="dismissSuggester('${e.id}')">SKIP</button>
+        </div>
+    </div>`;
+}
+
+function toggleChip(entryId, tag) {
+    const state = _suggesterState[entryId];
+    if (!state) return;
+    const idx = state.pendingSubtags.indexOf(tag);
+    if (idx === -1) state.pendingSubtags.push(tag);
+    else state.pendingSubtags.splice(idx, 1);
+    const chipId = "chip-" + entryId + "-" + tag.slice(1);
+    const _chip = document.getElementById(chipId); if(_chip) _chip.classList.toggle("active", state.pendingSubtags.includes(tag));
+}
+
+function shuffleSuggester(entryId) {
+    const e = ARCHIVE.entries.find(x => x.id === entryId);
+    if (!e || !e.mainTag) return;
+    const newSuggestions = getSubtagSuggestions(e.mainTag);
+    _suggesterState[entryId] = { currentSuggestions: newSuggestions, pendingSubtags: [] };
+    const chipsEl = document.getElementById("chips-" + entryId);
+    if (!chipsEl) return;
+    chipsEl.innerHTML = newSuggestions.map(tag =>
+        `<button class="subtag-chip" id="chip-${entryId}-${tag.slice(1)}" onclick="toggleChip('${entryId}','${tag}')">${tag}</button>`
+    ).join("");
+}
+
+function addManualTag(entryId) {
+    const input = document.getElementById("add-tag-" + entryId);
+    if (!input || !input.value.trim()) return;
+    let tag = input.value.trim();
+    if (!tag.startsWith("#")) tag = "#" + tag;
+    tag = tag.toLowerCase().replace(/\s+/g,"_");
+    const state = _suggesterState[entryId];
+    if (!state) return;
+    if (!state.pendingSubtags.includes(tag)) {
+        state.pendingSubtags.push(tag);
+        const chipsEl = document.getElementById("chips-" + entryId);
+        if (chipsEl) {
+            const chip = document.createElement("button");
+            chip.className = "subtag-chip active";
+            chip.id = "chip-" + entryId + "-" + tag.slice(1);
+            chip.textContent = tag;
+            chip.onclick = () => toggleChip(entryId, tag);
+            chipsEl.appendChild(chip);
+        }
+    }
+    input.value = "";
+}
+
+function applySuggesterTags(entryId) {
+    const e = ARCHIVE.entries.find(x => x.id === entryId);
+    const state = _suggesterState[entryId];
+    if (!e || !state) return;
+    // Merge new tags in, avoiding duplicates
+    for (const tag of state.pendingSubtags) {
+        if (!e.subtags.includes(tag)) e.subtags.push(tag);
+    }
+    e.suggesterSeen = true;
+    e.updatedAt = Date.now();
+    delete _suggesterState[entryId];
+    save();
+    renderFeed();
+}
+
+function dismissSuggester(entryId) {
+    const e = ARCHIVE.entries.find(x => x.id === entryId);
+    if (e) { e.suggesterSeen = true; e.updatedAt = Date.now(); }
+    delete _suggesterState[entryId];
+    save();
+    renderFeed();
+}
+
+/* ── Entry actions ── */
+function togglePin(id) {
+    const e = ARCHIVE.entries.find(x => x.id === id);
+    if (!e) return;
+    e.pinned = !e.pinned;
+    save(); renderFeed();
+}
+
+function toggleResolve(id) {
+    const e = ARCHIVE.entries.find(x => x.id === id);
+    if (!e) return;
+    e.resolved   = !e.resolved;
+    e.resolvedAt = e.resolved ? Date.now() : null;
+    save(); renderFeed();
+}
+
+function archiveEntry(id) {
+    const e = ARCHIVE.entries.find(x => x.id === id);
+    if (!e) return;
+    e.archived = true;
+    save(); renderFeed();
+}
+
+function toggleFollowUp(id) {
+    const el = document.getElementById("fu-" + id);
+    if (!el) return;
+    el.classList.toggle("open");
+    if (el.classList.contains("open")) {
+        const _fui = document.getElementById("fu-input-" + id); if(_fui) _fui.focus();
+    }
+}
+
+function saveFollowUp(parentId) {
+    const input = document.getElementById("fu-input-" + parentId);
+    if (!input || !input.value.trim()) return;
+    const parent = ARCHIVE.entries.find(x => x.id === parentId);
+    if (!parent) return;
+
+    const child = {
+        id: uid(), type: parent.type, content: input.value.trim(),
+        createdAt: Date.now(), updatedAt: Date.now(),
+        linkedStat: parent.linkedStat, linkedEntity: null, linkedQuest: null,
+        tags: [], resolved: false, resolvedAt: null,
+        parentId: parentId, children: [],
+        surfaceCount: 0, lastSurfaced: null, snoozedUntil: null,
+        pinned: false, archived: false, versions: [], meta: {}
+    };
+    ARCHIVE.entries.push(child);
+    if (!parent.children) parent.children = [];
+    parent.children.push(child.id);
+    input.value = "";
+    save(); renderFeed();
+}
+
+function toggleVersions(id) {
+    const e = ARCHIVE.entries.find(x => x.id === id);
+    if (!e || !(e.versions && e.versions.length)) return;
+    alert(e.versions.map((v,i) =>
+        `v${i+1} — ${new Date(v.updatedAt).toLocaleString()}\n${v.content}`
+    ).join("\n\n---\n\n"));
+}
+
+/* ── Selector ── */
+let _selectorTargetId = null;
+
+function openSelector(id) {
+    _selectorTargetId = id;
+    const grid = document.getElementById("selector-grid");
+    grid.innerHTML = CONTENT_TYPES.map(t =>
+        `<button class="selector-opt type-${t}" onclick="applyType('${t}')">
+            ${TYPE_LABELS[t] || t}
+         </button>`
+    ).join("");
+    document.getElementById("selector-bg").classList.add("open");
+}
+
+function applyType(type) {
+    if (!_selectorTargetId) return;
+    const e = ARCHIVE.entries.find(x => x.id === _selectorTargetId);
+    if (e) { e.type = type; e.updatedAt = Date.now(); save(); }
+    closeSelector();
+    renderFeed();
+}
+
+function closeSelector() {
+    document.getElementById("selector-bg").classList.remove("open");
+    _selectorTargetId = null;
+}
+
+function closeSelectorIfBg(ev) {
+    if (ev.target === document.getElementById("selector-bg")) closeSelector();
+}
+
+/* ── Snooze ── */
+let _snoozeTargetId = null;
+
+function openSnooze(id) {
+    _snoozeTargetId = id;
+    document.getElementById("snooze-modal").classList.add("open");
+}
+
+function doSnooze(ms) {
+    const e = ARCHIVE.entries.find(x => x.id === _snoozeTargetId);
+    if (e) { e.snoozedUntil = Date.now() + ms; save(); }
+    closeSnooze();
+    renderFeed();
+}
+
+function closeSnooze() {
+    document.getElementById("snooze-modal").classList.remove("open");
+    _snoozeTargetId = null;
+}
+
+/* ── Capture bar ── */
+function autoResize(el) {
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 120) + "px";
+    document.getElementById("capture-send").disabled = !el.value.trim();
+}
+
+function handleCaptureKey(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        saveEntry();
+    }
+}
+
+function onSelectChange(el) {
+    el.classList.toggle("has-value", !!el.value);
+    const type = document.getElementById("sel-type").value;
+    document.getElementById("sel-stakes").style.display  = type === "DEADLINE" ? "" : "none";
+    document.getElementById("sel-deadline").style.display = type === "DEADLINE" ? "" : "none";
+}
+
+function saveEntry() {
+    const input   = document.getElementById("capture-input");
+    const content = input.value.trim();
+    if (!content) return;
+
+    const type    = document.getElementById("sel-type").value || "UNSORTED";
+    const stat    = document.getElementById("sel-stat").value || null;
+    const stakes  = document.getElementById("sel-stakes").value || null;
+
+    const mainTag = document.getElementById("sel-maintag").value || null;
+
+    const entry = {
+        id: uid(),
+        type,
+        content,
+        createdAt:       Date.now(),
+        updatedAt:       Date.now(),
+        linkedStat:      stat,
+        linkedEntity:    null,
+        linkedQuest:     null,
+        mainTag,                      // PERSON | PLACE | THING | IDEA | TASK | QUESTION
+        subtags:         [],          // applied subtags e.g. ["#friend","#recurring"]
+        suggesterSeen:   false,       // has TAG_SUGGESTER been shown for this entry
+        tags:            [],
+        resolved:        false,
+        resolvedAt:      null,
+        parentId:        null,
+        children:        [],
+        surfaceCount:    0,
+        lastSurfaced:    null,
+        snoozedUntil:    null,
+        pinned:          false,
+        archived:        false,
+        versions:        [],
+        meta:            { ...(stakes ? { stakes } : {}), ...(document.getElementById('sel-deadline').value ? { deadline: new Date(document.getElementById('sel-deadline').value).getTime() } : {}) }
+    };
+
+    ARCHIVE.entries.unshift(entry);
+    save();
+
+    // Insert new card to top of deck immediately
+    var newCards = [{ html: buildCard(entry), id: entry.id }];
+    if (entry.mainTag && !entry.suggesterSeen) {
+        var sc = buildSuggesterCard(entry);
+        if (sc) newCards.push({ html: sc, id: "sug_" + entry.id });
+    }
+    for (var ni = newCards.length - 1; ni >= 0; ni--) _deck.unshift(newCards[ni]);
+    while (_deck.length > DECK_SIZE + 2) _deck.pop();
+    renderDeck(false);
+    updateCount();
+
+    // Reset bar
+    input.value = "";
+    input.style.height = "auto";
+    document.getElementById("sel-maintag").value = "";
+    document.getElementById("sel-type").value   = "";
+    document.getElementById("sel-stat").value   = "";
+    document.getElementById("sel-stakes").value  = "";
+    document.getElementById("sel-deadline").value = "";
+    document.getElementById("sel-deadline").style.display = "none";
+    document.querySelectorAll(".capture-select").forEach(s => s.classList.remove("has-value"));
+    document.getElementById("sel-stakes").style.display = "none";
+    document.getElementById("capture-send").disabled = true;
+
+    renderFeed();
+}
+
+/* ── Init ── */
+load();
+
+// Seed starter entries if archive is empty
+function seedIfEmpty() {
+    if (ARCHIVE.entries.length > 0) return;
+    var seeds = [
+        { content: "This is your Archive. Swipe up to move through cards.", type: "UNSORTED", mainTag: null },
+        { content: "Capture anything on your mind using the bar at the bottom.", type: "UNSORTED", mainTag: null },
+        { content: "Tag entries with a category to unlock the TAG_SUGGESTER.", type: "UNSORTED", mainTag: "IDEA" },
+        { content: "TWIN, BRIDGE, and CONTRAST cards connect your thoughts to each other.", type: "UNSORTED", mainTag: "IDEA" },
+        { content: "Pinned entries stay in rotation. Resolved entries leave it.", type: "UNSORTED", mainTag: "IDEA" },
+        { content: "SLOP cards are passive content. No input required — just read and swipe.", type: "UNSORTED", mainTag: null },
+        { content: "TIME CAPSULE cards let you write to your future self.", type: "UNSORTED", mainTag: "IDEA" },
+        { content: "What's something you've been meaning to write down?", type: "QUESTION", mainTag: "QUESTION" },
+    ];
+    var now = Date.now();
+    seeds.forEach(function(s, i) {
+        ARCHIVE.entries.push({
+            id: uid(), type: s.type, content: s.content,
+            createdAt: now - (seeds.length - i) * 86400000,
+            updatedAt: now - (seeds.length - i) * 86400000,
+            linkedStat: null, linkedEntity: null, linkedQuest: null,
+            mainTag: s.mainTag, subtags: [], suggesterSeen: false,
+            tags: [], resolved: false, resolvedAt: null,
+            parentId: null, children: [], surfaceCount: 0,
+            lastSurfaced: null, snoozedUntil: null,
+            pinned: false, archived: false, versions: [], meta: {}
+        });
+    });
+    save();
+}
+seedIfEmpty();
+initSwipe();
+initDeck();
+
+// Refresh deadlines every minute
+setInterval(() => {
+    if (ARCHIVE.entries.some(e => e.type === "DEADLINE" && !e.resolved)) {
+        renderFeed();
+    }
+}, 60000);
+</script>
+</body>
+</html>
