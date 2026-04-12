@@ -96,19 +96,33 @@ body {
     min-height: 0;
 }
 
-/* Stack layout — only idx 0 is visible, others hidden */
-.deck-card-wrap {
+/* Display slot — single card centered in view */
+#card-display {
     position: absolute;
-    left: 16px;
-    right: 16px;
-    transition: transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.3s ease;
+    left: 16px; right: 16px;
+    top: calc(50% + 10px);
+    transform: translateY(-50%);
+    z-index: 20;
     will-change: transform;
+    transition: none;
 }
-/* idx 0 = active card — centered */
-.deck-card-wrap[data-deck-idx="0"] { top: calc(50% + 30px); transform: translateY(-50%); z-index: 30; }
-/* all others hidden */
-.deck-card-wrap[data-deck-idx="1"],
-.deck-card-wrap[data-deck-idx="2"] { opacity: 0; pointer-events: none; top: calc(50% + 30px); transform: translateY(-50%); z-index: 10; }
+
+/* Queue slot — next card waiting below, invisible */
+#card-queue {
+    position: absolute;
+    left: 16px; right: 16px;
+    top: calc(150% + 10px);   /* off screen below */
+    transform: translateY(-50%);
+    z-index: 10;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Animations */
+@keyframes slideOutUp  { from{transform:translateY(-50%)} to{transform:translateY(calc(-50% - 110vh));opacity:0} }
+@keyframes slideInUp   { from{top:calc(150% + 10px);opacity:0} to{top:calc(50% + 10px);opacity:1} }
+#card-display.leaving  { animation: slideOutUp 0.28s cubic-bezier(0.4,0,0.6,1) forwards; }
+#card-queue.entering   { opacity:1; animation: slideInUp 0.32s cubic-bezier(0.25,0.46,0.45,0.94) forwards; }
 
 /* Deck transition animations */
 @keyframes snapBack   { from{transform:translateY(var(--drag-y,0px));opacity:1} to{transform:translateY(0);opacity:1} }
@@ -126,7 +140,7 @@ body {
     overflow: hidden;
     transition: border-color 0.15s;
     animation: cardIn 0.25s ease forwards;
-    min-height: calc(90dvh - 180px);
+    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px);
     display: flex;
     flex-direction: column;
 }
@@ -500,7 +514,7 @@ body {
     border-radius: 3px;
     overflow: hidden;
     animation: cardIn 0.25s ease forwards;
-    min-height: calc(90dvh - 220px);
+    height: calc(100dvh - 240px); max-height: calc(100dvh - 240px);
     display: flex;
     flex-direction: column;
 }
@@ -525,7 +539,7 @@ body {
     border-radius: 3px;
     overflow: hidden;
     animation: cardIn 0.25s ease forwards;
-    min-height: calc(90dvh - 220px);
+    height: calc(100dvh - 240px); max-height: calc(100dvh - 240px);
     display: flex;
     flex-direction: column;
 }
@@ -553,7 +567,7 @@ body {
     border-radius: 3px;
     overflow: hidden;
     animation: cardIn 0.25s ease forwards;
-    min-height: calc(90dvh - 180px);
+    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px);
     display: flex;
     flex-direction: column;
 }
@@ -586,7 +600,7 @@ body {
     border-radius: 3px;
     overflow: hidden;
     animation: cardIn 0.25s ease forwards;
-    min-height: calc(90dvh - 180px);
+    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px);
     display: flex;
     flex-direction: column;
 }
@@ -622,7 +636,7 @@ body {
     border-radius: 3px;
     overflow: hidden;
     animation: cardIn 0.25s ease forwards;
-    min-height: calc(90dvh - 180px);
+    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px);
     display: flex;
     flex-direction: column;
 }
@@ -714,17 +728,20 @@ body {
     border-radius: 3px;
     overflow: hidden;
     animation: cardIn 0.25s ease forwards;
-    min-height: calc(90dvh - 180px);
+    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px);
     display: flex;
     flex-direction: column;
 }
 .slop-image-frame {
-    flex: 1;
+    height: 55%;
+    min-height: 0;
     background: #080f1e;
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
 }
 .slop-image-placeholder {
     width: 48px;
@@ -746,7 +763,7 @@ body {
 .contrast-card {
     background: var(--card); border: 1px solid rgba(232,122,77,0.25); border-radius: 3px;
     overflow: hidden; animation: cardIn 0.25s ease forwards;
-    min-height: calc(90dvh - 180px); display: flex; flex-direction: column;
+    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px); display: flex; flex-direction: column;
 }
 .contrast-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
 .contrast-label  { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--orange); font-family:"Share Tech Mono",monospace; }
@@ -765,7 +782,7 @@ body {
 .bridge-card {
     background: var(--card); border: 1px solid rgba(74,159,232,0.25); border-radius: 3px;
     overflow: hidden; animation: cardIn 0.25s ease forwards;
-    min-height: calc(90dvh - 180px); display: flex; flex-direction: column;
+    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px); display: flex; flex-direction: column;
 }
 .bridge-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
 .bridge-label  { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--blue); font-family:"Share Tech Mono",monospace; }
@@ -785,7 +802,7 @@ body {
 .audit-card {
     background: var(--card); border: 1px solid rgba(180,77,232,0.25); border-radius: 3px;
     overflow: hidden; animation: cardIn 0.25s ease forwards;
-    min-height: calc(90dvh - 180px); display: flex; flex-direction: column;
+    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px); display: flex; flex-direction: column;
 }
 .audit-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
 .audit-label  { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--purple); font-family:"Share Tech Mono",monospace; }
@@ -803,7 +820,7 @@ body {
 .momentum-card {
     background: var(--card); border: 1px solid rgba(77,221,232,0.2); border-radius: 3px;
     overflow: hidden; animation: cardIn 0.25s ease forwards;
-    min-height: calc(90dvh - 180px); display: flex; flex-direction: column;
+    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px); display: flex; flex-direction: column;
 }
 .momentum-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
 .momentum-label  { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--teal); font-family:"Share Tech Mono",monospace; }
@@ -820,9 +837,9 @@ body {
 .quote-card {
     background: var(--card); border: 1px solid var(--border); border-radius: 3px;
     overflow: hidden; animation: cardIn 0.25s ease forwards;
-    min-height: calc(90dvh - 180px); display: flex; flex-direction: column; opacity: 0.9;
+    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px); display: flex; flex-direction: column; opacity: 0.9;
 }
-.quote-image-frame { flex:1; background:#060c18; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:center; }
+.quote-image-frame { height:55%; min-height:0; flex-shrink:0; background:#060c18; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:center; overflow:hidden; }
 .quote-image-placeholder { width:48px; height:48px; border:1px solid var(--border2); border-radius:2px; opacity:0.3; }
 .quote-caption { padding:14px 16px 10px; }
 .quote-text   { font-size:14px; line-height:1.65; color:var(--text2); font-style:italic; margin-bottom:8px; }
@@ -832,7 +849,7 @@ body {
 .prompt-card {
     background: var(--card); border: 1px solid var(--border); border-radius: 3px;
     overflow: hidden; animation: cardIn 0.25s ease forwards;
-    min-height: calc(90dvh - 180px); display: flex; flex-direction: column;
+    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px); display: flex; flex-direction: column;
     justify-content: center; padding: 40px 24px;
 }
 .prompt-label   { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--muted); font-family:"Share Tech Mono",monospace; margin-bottom:20px; }
@@ -845,7 +862,7 @@ body {
     border-radius: 3px;
     overflow: hidden;
     animation: cardIn 0.25s ease forwards;
-    min-height: calc(90dvh - 180px);
+    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px);
     display: flex;
     flex-direction: column;
 }
@@ -924,7 +941,7 @@ body {
     border-radius: 3px;
     overflow: hidden;
     animation: cardIn 0.25s ease forwards;
-    min-height: calc(90dvh - 180px);
+    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px);
     display: flex;
     flex-direction: column;
 }
@@ -1165,7 +1182,7 @@ body {
     border-radius: 3px;
     overflow: hidden;
     animation: cardIn 0.25s ease forwards;
-    min-height: calc(90dvh - 180px);
+    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px);
     display: flex;
     flex-direction: column;
 }
@@ -1198,7 +1215,7 @@ body {
     border-radius: 3px;
     overflow: hidden;
     animation: cardIn 0.25s ease forwards;
-    min-height: calc(90dvh - 180px);
+    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px);
     display: flex;
     flex-direction: column;
 }
@@ -1231,7 +1248,7 @@ body {
 .contrast-card {
     background: var(--card); border: 1px solid rgba(232,122,77,0.25); border-radius: 3px;
     overflow: hidden; animation: cardIn 0.25s ease forwards;
-    min-height: calc(90dvh - 180px); display: flex; flex-direction: column;
+    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px); display: flex; flex-direction: column;
 }
 .contrast-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
 .contrast-label  { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--orange); font-family:"Share Tech Mono",monospace; }
@@ -1250,7 +1267,7 @@ body {
 .bridge-card {
     background: var(--card); border: 1px solid rgba(74,159,232,0.25); border-radius: 3px;
     overflow: hidden; animation: cardIn 0.25s ease forwards;
-    min-height: calc(90dvh - 180px); display: flex; flex-direction: column;
+    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px); display: flex; flex-direction: column;
 }
 .bridge-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
 .bridge-label  { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--blue); font-family:"Share Tech Mono",monospace; }
@@ -1270,7 +1287,7 @@ body {
 .audit-card {
     background: var(--card); border: 1px solid rgba(180,77,232,0.25); border-radius: 3px;
     overflow: hidden; animation: cardIn 0.25s ease forwards;
-    min-height: calc(90dvh - 180px); display: flex; flex-direction: column;
+    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px); display: flex; flex-direction: column;
 }
 .audit-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
 .audit-label  { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--purple); font-family:"Share Tech Mono",monospace; }
@@ -1288,7 +1305,7 @@ body {
 .momentum-card {
     background: var(--card); border: 1px solid rgba(77,221,232,0.2); border-radius: 3px;
     overflow: hidden; animation: cardIn 0.25s ease forwards;
-    min-height: calc(90dvh - 180px); display: flex; flex-direction: column;
+    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px); display: flex; flex-direction: column;
 }
 .momentum-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
 .momentum-label  { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--teal); font-family:"Share Tech Mono",monospace; }
@@ -1305,9 +1322,9 @@ body {
 .quote-card {
     background: var(--card); border: 1px solid var(--border); border-radius: 3px;
     overflow: hidden; animation: cardIn 0.25s ease forwards;
-    min-height: calc(90dvh - 180px); display: flex; flex-direction: column; opacity: 0.9;
+    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px); display: flex; flex-direction: column; opacity: 0.9;
 }
-.quote-image-frame { flex:1; background:#060c18; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:center; }
+.quote-image-frame { height:55%; min-height:0; flex-shrink:0; background:#060c18; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:center; overflow:hidden; }
 .quote-image-placeholder { width:48px; height:48px; border:1px solid var(--border2); border-radius:2px; opacity:0.3; }
 .quote-caption { padding:14px 16px 10px; }
 .quote-text   { font-size:14px; line-height:1.65; color:var(--text2); font-style:italic; margin-bottom:8px; }
@@ -1317,7 +1334,7 @@ body {
 .prompt-card {
     background: var(--card); border: 1px solid var(--border); border-radius: 3px;
     overflow: hidden; animation: cardIn 0.25s ease forwards;
-    min-height: calc(90dvh - 180px); display: flex; flex-direction: column;
+    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px); display: flex; flex-direction: column;
     justify-content: center; padding: 40px 24px;
 }
 .prompt-label   { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--muted); font-family:"Share Tech Mono",monospace; margin-bottom:20px; }
@@ -1338,10 +1355,12 @@ body {
     </div>
 </div>
 
-<div style="width:100%;max-width:480px;text-align:center;padding:6px 0 2px;">
-    <span style="font-size:9px;font-family:Share Tech Mono,monospace;color:#1e4070;letter-spacing:2px;">↑ SWIPE TO ADVANCE</span>
+<div class="feed" id="feed">
+    <!-- display slot: current card in view -->
+    <div id="card-display"></div>
+    <!-- queue slot: next card, off screen below, invisible until swap -->
+    <div id="card-queue"></div>
 </div>
-<div class="feed" id="feed"></div>
 
 <!-- Input selector sheet -->
 <div class="selector-sheet-bg" id="selector-bg" onclick="closeSelectorIfBg(event)">
@@ -1985,13 +2004,15 @@ function surfaceWeight(e) {
 }
 
 /* ── Deck state ── */
-const DECK_SIZE = 3;
-let _filter     = "ALL";
-let _deck       = [];   // cards on screen
-let _entryQueue = [];   // weighted archive entries, refills when empty
+let _filter       = "ALL";
+let _entryQueue   = [];        // weighted archive entries
+let _currentCard  = null;      // card in display window
+let _nextCard     = null;      // pre-generated next card
+let _swipeReady   = false;     // true when next card is loaded in DOM
+
 let _swipeStartY    = null;
 let _swipeStartTime = null;
-let _swiping        = false;
+
 // Card counter IDs
 let _statusCardId   = 0;
 let _capsuleId      = 0;
@@ -2001,15 +2022,6 @@ let _twinCardId     = 0;
 let _contrastCardId = 0;
 let _bridgeCardId   = 0;
 let _auditCardId    = 0;
-
-function setFilter(btn) {
-    var newFilter = btn.dataset.filter;
-    document.querySelectorAll(".filter-btn").forEach(function(b) { b.classList.remove("active"); });
-    btn.classList.add("active");
-    if (newFilter === _filter) return; // same tab — no reset
-    _filter = newFilter;
-    initDeck();
-}
 
 /* ── Card Dealer ── */
 const DEALER_RULES = [
@@ -2030,6 +2042,15 @@ const DEALER_RULES = [
     // remaining ~75% = entry cards
 ];
 
+function setFilter(btn) {
+    var newFilter = btn.dataset.filter;
+    document.querySelectorAll(".filter-btn").forEach(function(b) { b.classList.remove("active"); });
+    btn.classList.add("active");
+    if (newFilter === _filter) return;
+    _filter = newFilter;
+    initDeck();
+}
+
 function buildFilteredEntryQueue() {
     var entries = ARCHIVE.entries.filter(function(e) {
         if (e.archived) return false;
@@ -2045,106 +2066,142 @@ function buildFilteredEntryQueue() {
         .map(function(x) { return x.e; });
 }
 
-/* Deal one card — called every time a card is dismissed */
-function dealOneCard() {
-    // Refill entry queue if empty
-    if (_entryQueue.length === 0) {
-        _entryQueue = buildFilteredEntryQueue();
+/* buildSystemCard — always returns { html, id } or null */
+function buildSystemCard(type) {
+    switch (type) {
+        case "SLOP":         return { html: buildSlopSystemCard(),  id: "slop_"     + Date.now() };
+        case "SECRET":       return { html: buildSecretCard(),      id: "secret_"   + Date.now() };
+        case "QUOTE":        return { html: buildQuoteCard(),       id: "quote_"    + Date.now() };
+        case "PROMPT":       return { html: buildPromptCard(),      id: "prompt_"   + Date.now() };
+        case "STATUS_ENTRY": return { html: buildStatusEntryCard(), id: "se_"       + Date.now() };
+        case "TIME_CAPSULE": return { html: buildTimeCapsuleCard(), id: "tc_"       + Date.now() };
+        case "PREDICTION":   return { html: buildPredictionCard(),  id: "pred_"     + Date.now() };
+        case "TWIN": {
+            var tw = buildTwinCard();
+            return tw ? { html: tw, id: "twin_"     + Date.now() } : null;
+        }
+        case "CONTRAST": {
+            var ct = buildContrastCard();
+            return ct ? { html: ct, id: "contrast_" + Date.now() } : null;
+        }
+        case "BRIDGE": {
+            var br = buildBridgeCard();
+            return br ? { html: br, id: "bridge_"   + Date.now() } : null;
+        }
+        case "AUDIT": {
+            var au = buildAuditCard();
+            return au ? { html: au, id: "audit_"    + Date.now() } : null;
+        }
+        case "MOMENTUM": {
+            var mo = buildMomentumCard();
+            return mo ? { html: mo, id: "momentum_" + Date.now() } : null;
+        }
+        case "REFLECTION": {
+            var re = pickReflectionEntry();
+            if (!re) return null;
+            markReflectionShown();
+            return { html: buildReflectionCard(re), id: "ref_" + re.id };
+        }
+        case "PATTERN": {
+            var patterns = detectPatterns();
+            if (!patterns.length) return null;
+            var pt = patterns[0];
+            return { html: buildPatternCard(pt.tag, pt.entries), id: "pat_" + pt.tag };
+        }
+        default: return null;
     }
+}
 
-    // Roll dealer
+/* Deal one card from dealer */
+function dealOneCard() {
+    if (_entryQueue.length === 0) _entryQueue = buildFilteredEntryQueue();
     var roll = Math.random();
     var cumulative = 0;
     for (var i = 0; i < DEALER_RULES.length; i++) {
         var rule = DEALER_RULES[i];
         cumulative += rule.weight;
         if (roll < cumulative) {
-            if (!rule.condition()) break; // condition failed → entry card
+            if (!rule.condition()) break;
             var sys = buildSystemCard(rule.type);
-            if (sys) return Array.isArray(sys) ? sys : [sys];
+            if (sys) return sys;
             break;
         }
     }
-
     // Entry card
     if (_entryQueue.length === 0) {
-        return [{ html: buildSlopSystemCard(), id: "slop_fallback_" + Date.now() }];
+        return { html: buildSlopSystemCard(), id: "slop_fallback_" + Date.now() };
     }
     var e = _entryQueue.shift();
     e.lastSurfaced = Date.now();
     e.surfaceCount = (e.surfaceCount || 0) + 1;
-    var items = [{ html: buildCard(e), id: e.id }];
+    // If entry needs a suggester, wrap both into one html block
+    var html = buildCard(e);
     if (e.mainTag && !e.suggesterSeen && !e.parentId) {
         var sc = buildSuggesterCard(e);
-        if (sc) items.push({ html: sc, id: "sug_" + e.id });
+        if (sc) html += sc;
     }
-    return items;
+    return { html: html, id: e.id };
 }
 
-function dealSlot(entryQueue) {
-    // Legacy alias used by buildSlopCard — just deal one card
-    return dealOneCard();
-}
-
-function buildSystemCard(type) {
-    switch (type) {
-        case "SLOP":          return { html: buildSlopSystemCard(),   id: "slop_"   + Date.now() };
-        case "TWIN":          { var tw = buildTwinCard();     return tw ? { html: tw,  id: "twin_"     + Date.now() } : null; }
-        case "CONTRAST":      { var ct = buildContrastCard();  return ct ? { html: ct,  id: "contrast_" + Date.now() } : null; }
-        case "BRIDGE":        { var br = buildBridgeCard();    return br ? { html: br,  id: "bridge_"   + Date.now() } : null; }
-        case "AUDIT":         { var au = buildAuditCard();     return au ? { html: au,  id: "audit_"    + Date.now() } : null; }
-        case "MOMENTUM":      { var mo = buildMomentumCard();  return mo ? { html: mo,  id: "momentum_" + Date.now() } : null; }
-        case "QUOTE":         return { html: buildQuoteCard(),   id: "quote_"  + Date.now() };
-        case "PROMPT":        return { html: buildPromptCard(),  id: "prompt_" + Date.now() };
-        case "SECRET":        return { html: buildSecretCard(),       id: "secret_" + Date.now() };
-        case "STATUS_ENTRY":  return { html: buildStatusEntryCard(),  id: "se_"     + Date.now() };
-        case "TIME_CAPSULE":  return { html: buildTimeCapsuleCard(),  id: "tc_"     + Date.now() };
-        case "PREDICTION":    return { html: buildPredictionCard(),   id: "pred_"   + Date.now() };
-        case "REFLECTION": {
-            const e = pickReflectionEntry();
-            if (!e) return null;
-            markReflectionShown();
-            return { html: buildReflectionCard(e), id: "ref_" + e.id };
-        }
-        case "PATTERN": {
-            const patterns = detectPatterns();
-            if (!patterns.length) return null;
-            const { tag, entries: pe } = patterns[0];
-            return { html: buildPatternCard(tag, pe), id: "pat_" + tag };
-        }
-        default: return null;
+/* Load a card into the queue slot (hidden, below screen) */
+function loadQueue() {
+    _nextCard = dealOneCard();
+    var qEl = document.getElementById("card-queue");
+    if (qEl) {
+        qEl.innerHTML      = _nextCard.html;
+        qEl.style.top      = "calc(150% + 30px)";
+        qEl.style.opacity  = "0";
+        qEl.className      = "";
     }
+    _swipeReady = true;
 }
 
-function buildSlopCard(entryQueue) {
-    // no longer called directly — dealOneCard handles entry cards
-    // kept as alias for any legacy references
-    return dealOneCard();
-}
-
-/* Initialize deck — deal DECK_SIZE cards on demand */
+/* Init — show first card in display, load second into queue */
 function initDeck() {
-    _entryQueue = buildFilteredEntryQueue();
-    _deck = [];
-    for (var i = 0; i < DECK_SIZE; i++) {
-        var cards = dealOneCard();
-        for (var j = 0; j < cards.length; j++) _deck.push(cards[j]);
+    _swipeReady   = false;
+    _entryQueue   = buildFilteredEntryQueue();
+    _currentCard  = dealOneCard();
+    var dEl = document.getElementById("card-display");
+    if (dEl) {
+        dEl.innerHTML  = _currentCard.html;
+        dEl.className  = "";
+        dEl.style.transform = "translateY(-50%)";
     }
-    renderDeck(false);
     updateCount();
+    loadQueue();
 }
 
-/* Render current deck to DOM */
-function renderDeck(animateBottom) {
-    var feed = document.getElementById("feed");
-    if (_deck.length === 0) {
-        feed.innerHTML = '<div class="empty-state"><p>NO ENTRIES' + (_filter !== "ALL" ? " IN THIS FILTER" : "") + '</p><p style="margin-top:8px;font-size:11px;">USE THE BAR BELOW TO CAPTURE ANYTHING</p></div>';
-        return;
+/* Swap — animate current out, queue in, then load next into queue */
+function swapCards() {
+    if (!_swipeReady) return;
+    _swipeReady = false;
+
+    var dEl = document.getElementById("card-display");
+    var qEl = document.getElementById("card-queue");
+
+    // Step 1: animate current card out
+    if (dEl) dEl.classList.add("leaving");
+
+    // Step 2: animate queue card in simultaneously
+    if (qEl) {
+        qEl.style.opacity = "1";
+        qEl.classList.add("entering");
     }
-    feed.innerHTML = _deck.map(function(item, i) {
-        var isNew = animateBottom && i === _deck.length - 1;
-        return '<div class="deck-card-wrap' + (isNew ? ' card-entering' : '') + '" data-deck-idx="' + i + '">' + item.html + '</div>';
-    }).join("");
+
+    // Step 3: after animation, promote queue to display, load next
+    setTimeout(function() {
+        _currentCard = _nextCard;
+        if (dEl && qEl) {
+            dEl.innerHTML      = _currentCard.html;
+            dEl.className      = "";
+            dEl.style.transform = "translateY(-50%)";
+            qEl.innerHTML      = "";
+            qEl.className      = "";
+            qEl.style.top      = "calc(150% + 30px)";
+            qEl.style.opacity  = "0";
+        }
+        loadQueue(); // dealer generates next card
+    }, 320);
 }
 
 function updateCount() {
@@ -2152,97 +2209,86 @@ function updateCount() {
     document.getElementById("entry-count").textContent = total + " ENTRIES";
 }
 
-/* advanceDeck — remove top, deal one new card to bottom */
+/* advanceDeck — called by action buttons (skip, submit etc) */
 function advanceDeck() {
-    if (_deck.length === 0) return;
-    _deck.shift();
-    var cards = dealOneCard();
-    for (var i = 0; i < cards.length; i++) _deck.push(cards[i]);
-    renderDeck(true);
+    swapCards();
 }
 
 function renderFeed() { initDeck(); }
 
 /* ── Drag-follow swipe mechanic ── */
-function attachSwipeListeners() {} // no-op — handled by initSwipe
+
+function attachSwipeListeners() {}
 
 function initSwipe() {
-    let startY    = null;
-    let currentY  = null;
-    let startTime = null;
-    let dragging  = false;
-    let topCard   = null;
+    var startY    = null;
+    var startTime = null;
+    var dragging  = false;
 
     function isInteractive(el) {
-        return el.closest(".capture-bar") ||
+        return el.closest(".capture-bar")       ||
                el.closest(".selector-sheet-bg") ||
-               el.closest(".snooze-modal-bg") ||
-               el.closest("button") ||
-               el.closest("input") ||
-               el.closest("textarea") ||
+               el.closest(".snooze-modal-bg")   ||
+               el.closest("button")             ||
+               el.closest("input")              ||
+               el.closest("textarea")           ||
                el.closest("select");
     }
 
-    function getTopCard() {
-        return document.querySelector(".deck-card-wrap[data-deck-idx='0']");
-    }
-
-    document.addEventListener("touchstart", e => {
+    document.addEventListener("touchstart", function(e) {
         if (isInteractive(e.target)) return;
-        topCard   = getTopCard();
-        if (!topCard) return;
         startY    = e.touches[0].clientY;
-        currentY  = startY;
         startTime = Date.now();
-        dragging  = false; // confirmed on first upward move
+        dragging  = false;
     }, { passive: true });
 
     document.addEventListener("touchmove", function(e) {
-        if (!topCard || startY === null) return;
-        currentY = e.touches[0].clientY;
-        var dy = startY - currentY;
-        // Only engage drag on upward movement
+        if (startY === null) return;
+        var dy = startY - e.touches[0].clientY;
         if (dy <= 0) { dragging = false; return; }
         dragging = true;
-        var moved   = dy * 0.65;
-        var opacity = Math.max(0.4, 1 - moved / 400);
-        topCard.style.transform = "translateY(calc(-50% + 30px - " + moved + "px))";
-        topCard.style.opacity   = opacity;
+        // Drag the display card with finger
+        var dEl = document.getElementById("card-display");
+        if (dEl) {
+            var moved = dy * 0.65;
+            dEl.style.transition = "none";
+            dEl.style.transform  = "translateY(calc(-50% - " + moved + "px))";
+            dEl.style.opacity    = String(Math.max(0.4, 1 - moved / 400));
+        }
     }, { passive: true });
 
     document.addEventListener("touchend", function(e) {
-        if (!dragging || !topCard) { dragging = false; return; }
+        if (startY === null) return;
         var dy       = startY - e.changedTouches[0].clientY;
         var dt       = Date.now() - startTime;
         var velocity = dy / dt;
+        var dEl      = document.getElementById("card-display");
 
-        if (dy > 80 || (velocity > 0.45 && dy > 25)) {
-            if (topCard.dataset.dismissing) return; // already dismissing
-            topCard.dataset.dismissing = "1";
-            topCard.style.transition = "transform 0.28s cubic-bezier(0.4,0,0.6,1), opacity 0.28s ease";
-            topCard.style.transform  = "translateY(calc(-50% + 30px - 110vh))";
-            topCard.style.opacity    = "0";
-            setTimeout(function() { advanceDeck(); }, 260);
+        if (dragging && (dy > 80 || (velocity > 0.45 && dy > 25))) {
+            // Commit — trigger swap
+            if (dEl) {
+                dEl.style.transition = "";
+                dEl.style.transform  = "";
+                dEl.style.opacity    = "";
+            }
+            swapCards();
         } else {
-            topCard.style.transition = "transform 0.25s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.25s ease";
-            topCard.style.transform  = "translateY(calc(-50% + 30px))";
-            topCard.style.opacity    = "1";
-            setTimeout(function() {
-                if (topCard) {
-                    topCard.style.transition = "";
-                    topCard.style.transform  = "";
-                    topCard.style.opacity    = "";
-                }
-            }, 260);
+            // Snap back
+            if (dEl) {
+                dEl.style.transition = "transform 0.25s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.25s ease";
+                dEl.style.transform  = "translateY(-50%)";
+                dEl.style.opacity    = "1";
+                setTimeout(function() {
+                    dEl.style.transition = "";
+                }, 260);
+            }
         }
 
-        dragging = false;
-        topCard  = null;
         startY   = null;
-        currentY = null;
+        dragging = false;
     }, { passive: true });
-
 }  // end initSwipe
+
 
 /* Alias renderFeed → initDeck for backwards compat with action buttons */
 
