@@ -91,38 +91,39 @@ body {
     max-width: 480px;
     padding: 0 16px;
     flex: 1;
+    min-height: 0;
     position: relative;
     overflow: hidden;
-    min-height: 0;
 }
 
-/* Display slot — single card centered in view */
-#card-display {
+/* card-display fills the feed exactly */
+#card-display, #card-queue {
     position: absolute;
-    left: 16px; right: 16px;
-    top: calc(50% + 10px);
-    transform: translateY(-50%);
+    inset: 0;          /* left:0 right:0 top:0 bottom:0 */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Display slot — fills the feed */
+#card-display {
     z-index: 20;
     will-change: transform;
     transition: none;
 }
 
-/* Queue slot — next card waiting below, invisible */
+/* Queue slot — off screen below, invisible */
 #card-queue {
-    position: absolute;
-    left: 16px; right: 16px;
-    top: calc(150% + 10px);   /* off screen below */
-    transform: translateY(-50%);
     z-index: 10;
     opacity: 0;
     pointer-events: none;
+    transform: translateY(110%);
 }
 
 /* Animations */
-@keyframes slideOutUp  { from{transform:translateY(-50%)} to{transform:translateY(calc(-50% - 110vh));opacity:0} }
-@keyframes slideInUp   { from{top:calc(150% + 10px);opacity:0} to{top:calc(50% + 10px);opacity:1} }
-#card-display.leaving  { animation: slideOutUp 0.28s cubic-bezier(0.4,0,0.6,1) forwards; }
-#card-queue.entering   { opacity:1; animation: slideInUp 0.32s cubic-bezier(0.25,0.46,0.45,0.94) forwards; }
+@keyframes slideOutUp { from{transform:translateY(0);opacity:1} to{transform:translateY(-110%);opacity:0} }
+@keyframes slideInUp  { from{transform:translateY(110%);opacity:0} to{transform:translateY(0);opacity:1} }
+#card-display.leaving { animation: slideOutUp 0.28s cubic-bezier(0.4,0,0.6,1) forwards; }
+#card-queue.entering  { opacity:1; pointer-events:auto; animation: slideInUp 0.32s cubic-bezier(0.25,0.46,0.45,0.94) forwards; }
 
 /* Deck transition animations */
 @keyframes snapBack   { from{transform:translateY(var(--drag-y,0px));opacity:1} to{transform:translateY(0);opacity:1} }
@@ -140,7 +141,7 @@ body {
     overflow: hidden;
     transition: border-color 0.15s;
     animation: cardIn 0.25s ease forwards;
-    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px);
+    height: 100%; max-height: 100%;
     display: flex;
     flex-direction: column;
 }
@@ -514,7 +515,7 @@ body {
     border-radius: 3px;
     overflow: hidden;
     animation: cardIn 0.25s ease forwards;
-    height: calc(100dvh - 240px); max-height: calc(100dvh - 240px);
+    height: 100%; max-height: 100%;
     display: flex;
     flex-direction: column;
 }
@@ -539,7 +540,7 @@ body {
     border-radius: 3px;
     overflow: hidden;
     animation: cardIn 0.25s ease forwards;
-    height: calc(100dvh - 240px); max-height: calc(100dvh - 240px);
+    height: 100%; max-height: 100%;
     display: flex;
     flex-direction: column;
 }
@@ -567,7 +568,7 @@ body {
     border-radius: 3px;
     overflow: hidden;
     animation: cardIn 0.25s ease forwards;
-    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px);
+    height: 100%; max-height: 100%;
     display: flex;
     flex-direction: column;
 }
@@ -600,7 +601,7 @@ body {
     border-radius: 3px;
     overflow: hidden;
     animation: cardIn 0.25s ease forwards;
-    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px);
+    height: 100%; max-height: 100%;
     display: flex;
     flex-direction: column;
 }
@@ -636,7 +637,7 @@ body {
     border-radius: 3px;
     overflow: hidden;
     animation: cardIn 0.25s ease forwards;
-    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px);
+    height: 100%; max-height: 100%;
     display: flex;
     flex-direction: column;
 }
@@ -728,7 +729,7 @@ body {
     border-radius: 3px;
     overflow: hidden;
     animation: cardIn 0.25s ease forwards;
-    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px);
+    height: 100%; max-height: 100%;
     display: flex;
     flex-direction: column;
 }
@@ -763,7 +764,7 @@ body {
 .contrast-card {
     background: var(--card); border: 1px solid rgba(232,122,77,0.25); border-radius: 3px;
     overflow: hidden; animation: cardIn 0.25s ease forwards;
-    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px); display: flex; flex-direction: column;
+    height: 100%; max-height: 100%; display: flex; flex-direction: column;
 }
 .contrast-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
 .contrast-label  { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--orange); font-family:"Share Tech Mono",monospace; }
@@ -782,7 +783,7 @@ body {
 .bridge-card {
     background: var(--card); border: 1px solid rgba(74,159,232,0.25); border-radius: 3px;
     overflow: hidden; animation: cardIn 0.25s ease forwards;
-    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px); display: flex; flex-direction: column;
+    height: 100%; max-height: 100%; display: flex; flex-direction: column;
 }
 .bridge-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
 .bridge-label  { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--blue); font-family:"Share Tech Mono",monospace; }
@@ -802,7 +803,7 @@ body {
 .audit-card {
     background: var(--card); border: 1px solid rgba(180,77,232,0.25); border-radius: 3px;
     overflow: hidden; animation: cardIn 0.25s ease forwards;
-    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px); display: flex; flex-direction: column;
+    height: 100%; max-height: 100%; display: flex; flex-direction: column;
 }
 .audit-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
 .audit-label  { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--purple); font-family:"Share Tech Mono",monospace; }
@@ -820,7 +821,7 @@ body {
 .momentum-card {
     background: var(--card); border: 1px solid rgba(77,221,232,0.2); border-radius: 3px;
     overflow: hidden; animation: cardIn 0.25s ease forwards;
-    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px); display: flex; flex-direction: column;
+    height: 100%; max-height: 100%; display: flex; flex-direction: column;
 }
 .momentum-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
 .momentum-label  { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--teal); font-family:"Share Tech Mono",monospace; }
@@ -837,7 +838,7 @@ body {
 .quote-card {
     background: var(--card); border: 1px solid var(--border); border-radius: 3px;
     overflow: hidden; animation: cardIn 0.25s ease forwards;
-    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px); display: flex; flex-direction: column; opacity: 0.9;
+    height: 100%; max-height: 100%; display: flex; flex-direction: column; opacity: 0.9;
 }
 .quote-image-frame { height:55%; min-height:0; flex-shrink:0; background:#060c18; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:center; overflow:hidden; }
 .quote-image-placeholder { width:48px; height:48px; border:1px solid var(--border2); border-radius:2px; opacity:0.3; }
@@ -849,7 +850,7 @@ body {
 .prompt-card {
     background: var(--card); border: 1px solid var(--border); border-radius: 3px;
     overflow: hidden; animation: cardIn 0.25s ease forwards;
-    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px); display: flex; flex-direction: column;
+    height: 100%; max-height: 100%; display: flex; flex-direction: column;
     justify-content: center; padding: 40px 24px;
 }
 .prompt-label   { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--muted); font-family:"Share Tech Mono",monospace; margin-bottom:20px; }
@@ -862,7 +863,7 @@ body {
     border-radius: 3px;
     overflow: hidden;
     animation: cardIn 0.25s ease forwards;
-    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px);
+    height: 100%; max-height: 100%;
     display: flex;
     flex-direction: column;
 }
@@ -941,7 +942,7 @@ body {
     border-radius: 3px;
     overflow: hidden;
     animation: cardIn 0.25s ease forwards;
-    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px);
+    height: 100%; max-height: 100%;
     display: flex;
     flex-direction: column;
 }
@@ -1182,7 +1183,7 @@ body {
     border-radius: 3px;
     overflow: hidden;
     animation: cardIn 0.25s ease forwards;
-    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px);
+    height: 100%; max-height: 100%;
     display: flex;
     flex-direction: column;
 }
@@ -1215,7 +1216,7 @@ body {
     border-radius: 3px;
     overflow: hidden;
     animation: cardIn 0.25s ease forwards;
-    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px);
+    height: 100%; max-height: 100%;
     display: flex;
     flex-direction: column;
 }
@@ -1248,7 +1249,7 @@ body {
 .contrast-card {
     background: var(--card); border: 1px solid rgba(232,122,77,0.25); border-radius: 3px;
     overflow: hidden; animation: cardIn 0.25s ease forwards;
-    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px); display: flex; flex-direction: column;
+    height: 100%; max-height: 100%; display: flex; flex-direction: column;
 }
 .contrast-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
 .contrast-label  { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--orange); font-family:"Share Tech Mono",monospace; }
@@ -1267,7 +1268,7 @@ body {
 .bridge-card {
     background: var(--card); border: 1px solid rgba(74,159,232,0.25); border-radius: 3px;
     overflow: hidden; animation: cardIn 0.25s ease forwards;
-    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px); display: flex; flex-direction: column;
+    height: 100%; max-height: 100%; display: flex; flex-direction: column;
 }
 .bridge-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
 .bridge-label  { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--blue); font-family:"Share Tech Mono",monospace; }
@@ -1287,7 +1288,7 @@ body {
 .audit-card {
     background: var(--card); border: 1px solid rgba(180,77,232,0.25); border-radius: 3px;
     overflow: hidden; animation: cardIn 0.25s ease forwards;
-    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px); display: flex; flex-direction: column;
+    height: 100%; max-height: 100%; display: flex; flex-direction: column;
 }
 .audit-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
 .audit-label  { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--purple); font-family:"Share Tech Mono",monospace; }
@@ -1305,7 +1306,7 @@ body {
 .momentum-card {
     background: var(--card); border: 1px solid rgba(77,221,232,0.2); border-radius: 3px;
     overflow: hidden; animation: cardIn 0.25s ease forwards;
-    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px); display: flex; flex-direction: column;
+    height: 100%; max-height: 100%; display: flex; flex-direction: column;
 }
 .momentum-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
 .momentum-label  { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--teal); font-family:"Share Tech Mono",monospace; }
@@ -1322,7 +1323,7 @@ body {
 .quote-card {
     background: var(--card); border: 1px solid var(--border); border-radius: 3px;
     overflow: hidden; animation: cardIn 0.25s ease forwards;
-    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px); display: flex; flex-direction: column; opacity: 0.9;
+    height: 100%; max-height: 100%; display: flex; flex-direction: column; opacity: 0.9;
 }
 .quote-image-frame { height:55%; min-height:0; flex-shrink:0; background:#060c18; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:center; overflow:hidden; }
 .quote-image-placeholder { width:48px; height:48px; border:1px solid var(--border2); border-radius:2px; opacity:0.3; }
@@ -1334,7 +1335,7 @@ body {
 .prompt-card {
     background: var(--card); border: 1px solid var(--border); border-radius: 3px;
     overflow: hidden; animation: cardIn 0.25s ease forwards;
-    height: calc(100dvh - 200px); max-height: calc(100dvh - 200px); display: flex; flex-direction: column;
+    height: 100%; max-height: 100%; display: flex; flex-direction: column;
     justify-content: center; padding: 40px 24px;
 }
 .prompt-label   { font-size:9px; font-weight:700; letter-spacing:3px; color:var(--muted); font-family:"Share Tech Mono",monospace; margin-bottom:20px; }
@@ -1570,7 +1571,6 @@ function buildTwinCard() {
     return '<div class="twin-card" id="' + id + '">' +
         '<div class="twin-header">' +
             '<span class="twin-label">TWIN</span>' +
-            '<button class="twin-skip" onclick="advanceDeck()">SKIP</button>' +
         '</div>' +
         '<div class="twin-prompt-area">' +
             '<div class="twin-prompt-label">WHICH MATCHES THIS?</div>' +
@@ -1602,8 +1602,6 @@ function selectTwin(cardId, optIdx, matchedId, promptId) {
         save();
     }
 
-    // Advance after short delay so selection is visible
-    setTimeout(function() { advanceDeck(); }, 500);
 }
 
 /* ── CONTRAST card ── */
@@ -1617,8 +1615,7 @@ function buildContrastCard() {
     var bPreview = b.content.length > 100 ? b.content.slice(0,100) + "..." : b.content;
     return '<div class="contrast-card" id="' + id + '">' +
         '<div class="contrast-header"><span class="contrast-label">CONTRAST</span>' +
-        '<button class="contrast-skip" onclick="advanceDeck()">SKIP</button></div>' +
-        '<div class="contrast-entries">' +
+                '<div class="contrast-entries">' +
             '<div class="contrast-entry"><div class="contrast-entry-label">A</div>' + escHtml(aPreview) + '</div>' +
             '<div class="contrast-entry"><div class="contrast-entry-label">B</div>' + escHtml(bPreview) + '</div>' +
         '</div>' +
@@ -1639,8 +1636,7 @@ function buildBridgeCard() {
     var bPreview = b.content.length > 100 ? b.content.slice(0,100) + "..." : b.content;
     return '<div class="bridge-card" id="' + id + '">' +
         '<div class="bridge-header"><span class="bridge-label">BRIDGE</span>' +
-        '<button class="bridge-skip" onclick="advanceDeck()">SKIP</button></div>' +
-        '<div class="bridge-entries">' +
+                '<div class="bridge-entries">' +
             '<div class="bridge-entry"><div class="bridge-entry-label">A</div>' + escHtml(aPreview) + '</div>' +
             '<div class="bridge-connector">⟷</div>' +
             '<div class="bridge-entry"><div class="bridge-entry-label">B</div>' + escHtml(bPreview) + '</div>' +
@@ -1692,7 +1688,7 @@ function submitTwoEntry(cardType, cardId, aId, bId) {
         bEntry.meta[key].push({ withId: aId, note: text, at: Date.now() });
     }
     save();
-    advanceDeck();
+    showCardConfirmation(cardId);
 }
 
 /* ── AUDIT card ── */
@@ -1708,8 +1704,7 @@ function buildAuditCard() {
     }).join("");
     return '<div class="audit-card" id="' + id + '">' +
         '<div class="audit-header"><span class="audit-label">AUDIT · RECENT</span>' +
-        '<button class="audit-skip" onclick="advanceDeck()">SKIP</button></div>' +
-        '<div class="audit-entries">' + itemsHtml + '</div>' +
+                '<div class="audit-entries">' + itemsHtml + '</div>' +
         '<div class="audit-input-row">' +
             '<textarea class="audit-textarea" id="' + id + '-input" placeholder="what is the theme?" rows="1" oninput="cardTextareaResize(this)"></textarea>' +
             '<button class="audit-send" id="' + id + '-send" disabled onclick="submitAudit(&#39;' + id + '&#39;)">↑</button>' +
@@ -1731,7 +1726,7 @@ function submitAudit(cardId) {
     };
     ARCHIVE.entries.unshift(entry);
     save(); updateCount();
-    advanceDeck();
+    showCardConfirmation(cardId);
 }
 
 /* ── MOMENTUM card ── */
@@ -2149,7 +2144,7 @@ function loadQueue() {
     var qEl = document.getElementById("card-queue");
     if (qEl) {
         qEl.innerHTML      = _nextCard.html;
-        qEl.style.top      = "calc(150% + 30px)";
+        qEl.style.transform = "translateY(110%)";
         qEl.style.opacity  = "0";
         qEl.className      = "";
     }
@@ -2165,7 +2160,7 @@ function initDeck() {
     if (dEl) {
         dEl.innerHTML  = _currentCard.html;
         dEl.className  = "";
-        dEl.style.transform = "translateY(-50%)";
+        dEl.style.transform = "";
     }
     updateCount();
     loadQueue();
@@ -2194,10 +2189,10 @@ function swapCards() {
         if (dEl && qEl) {
             dEl.innerHTML      = _currentCard.html;
             dEl.className      = "";
-            dEl.style.transform = "translateY(-50%)";
+            dEl.style.transform = "";
             qEl.innerHTML      = "";
             qEl.className      = "";
-            qEl.style.top      = "calc(150% + 30px)";
+            qEl.style.transform = "translateY(110%)";
             qEl.style.opacity  = "0";
         }
         loadQueue(); // dealer generates next card
@@ -2209,7 +2204,7 @@ function updateCount() {
     document.getElementById("entry-count").textContent = total + " ENTRIES";
 }
 
-/* advanceDeck — called by action buttons (skip, submit etc) */
+/* advanceDeck — called by swapCards only */
 function advanceDeck() {
     swapCards();
 }
@@ -2226,13 +2221,17 @@ function initSwipe() {
     var dragging  = false;
 
     function isInteractive(el) {
-        return el.closest(".capture-bar")       ||
-               el.closest(".selector-sheet-bg") ||
-               el.closest(".snooze-modal-bg")   ||
-               el.closest("button")             ||
-               el.closest("input")              ||
-               el.closest("textarea")           ||
-               el.closest("select");
+        // Block swipe only on inputs and elements inside overlays/capture bar
+        // Card buttons (twin options, send buttons etc) should NOT block swipe
+        if (el.closest(".capture-bar"))       return true;
+        if (el.closest(".selector-sheet-bg")) return true;
+        if (el.closest(".snooze-modal-bg"))   return true;
+        if (el.closest("input"))              return true;
+        if (el.closest("textarea"))           return true;
+        if (el.closest("select"))             return true;
+        // Only block buttons that are inside the capture bar or modals (already caught above)
+        // Card content buttons are fine — user can still swipe from them
+        return false;
     }
 
     document.addEventListener("touchstart", function(e) {
@@ -2252,7 +2251,7 @@ function initSwipe() {
         if (dEl) {
             var moved = dy * 0.65;
             dEl.style.transition = "none";
-            dEl.style.transform  = "translateY(calc(-50% - " + moved + "px))";
+            dEl.style.transform  = "translateY(-" + moved + "px)";
             dEl.style.opacity    = String(Math.max(0.4, 1 - moved / 400));
         }
     }, { passive: true });
@@ -2276,7 +2275,7 @@ function initSwipe() {
             // Snap back
             if (dEl) {
                 dEl.style.transition = "transform 0.25s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.25s ease";
-                dEl.style.transform  = "translateY(-50%)";
+                dEl.style.transform  = "translateY(0)";
                 dEl.style.opacity    = "1";
                 setTimeout(function() {
                     dEl.style.transition = "";
@@ -2415,8 +2414,7 @@ function buildStatusEntryCard() {
     return `<div class="status-entry-card" id="${cardId}">
         <div class="status-entry-header">
             <span class="status-entry-label">STATUS_ENTRY</span>
-            <button class="status-entry-skip" onclick="skipStatusEntry('${cardId}')">SKIP</button>
-        </div>
+            </div>
         <div class="status-entry-prompt">${escHtml(prompt)}</div>
         <div class="status-entry-input-row">
             <textarea
@@ -2431,6 +2429,23 @@ function buildStatusEntryCard() {
                 onclick="submitStatusEntry('${cardId}','${escHtml(prompt)}')">↑</button>
         </div>
     </div>`;
+}
+
+/* Replace input row with confirmation after submit */
+function showCardConfirmation(cardId) {
+    // Find the input row by looking for common input row class patterns
+    var card = document.getElementById(cardId);
+    if (!card) return;
+    var inputRow = card.querySelector(
+        ".status-entry-input-row, .capsule-input-row, .prediction-input-row, " +
+        ".contrast-input-row, .bridge-input-row, .audit-input-row"
+    );
+    if (!inputRow) return;
+    inputRow.innerHTML =
+        '<div style="flex:1;display:flex;align-items:center;gap:8px;padding:4px 0;">' +
+        '<span style="font-size:18px;color:var(--green);">✓</span>' +
+        '<span style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--green);font-family:Share Tech Mono,monospace;">SAVED — SWIPE TO CONTINUE</span>' +
+        '</div>';
 }
 
 function seResize(el) {
@@ -2481,13 +2496,7 @@ function submitStatusEntry(cardId, prompt) {
     ARCHIVE.entries.unshift(entry);
     save();
     updateCount();
-
-    // Advance deck
-    advanceDeck();
-}
-
-function skipStatusEntry(cardId) {
-    advanceDeck();
+    showCardConfirmation(cardId);
 }
 
 /* ── TIME CAPSULE ── */
@@ -2499,8 +2508,7 @@ function buildTimeCapsuleCard() {
     return `<div class="capsule-card" id="${id}">
         <div class="capsule-header">
             <span class="capsule-label">TIME CAPSULE</span>
-            <button class="capsule-skip" onclick="advanceDeck()">SKIP</button>
-        </div>
+            </div>
         <div class="capsule-prompt">Write something to your future self.</div>
         <div class="capsule-hint">It will be sealed and opened at a random date between 2 and 6 weeks from now.</div>
         <div class="capsule-input-row">
@@ -2544,7 +2552,7 @@ function submitCapsule(id) {
     };
     ARCHIVE.entries.unshift(entry);
     save(); updateCount();
-    advanceDeck();
+    showCardConfirmation(id);
 }
 
 /* ── PREDICTION ── */
@@ -2564,7 +2572,6 @@ function buildPredictionCard() {
     return `<div class="prediction-card" id="${id}">
         <div class="prediction-header">
             <span class="prediction-label">PREDICTION</span>
-            <button class="prediction-skip" onclick="advanceDeck()">SKIP</button>
         </div>
         <div class="prediction-prompt">${escHtml(prompt)}</div>
         <div class="prediction-date-row">
@@ -2612,7 +2619,7 @@ function submitPrediction(id, prompt) {
     };
     ARCHIVE.entries.unshift(entry);
     save(); updateCount();
-    advanceDeck();
+    showCardConfirmation(id);
 }
 
 function verifyPrediction(entryId, result) {
@@ -2621,7 +2628,7 @@ function verifyPrediction(entryId, result) {
     e.meta.verified  = result;  // "YES" | "NO" | "PARTIAL"
     e.resolved       = result === "YES";
     e.updatedAt      = Date.now();
-    save(); initDeck();
+    save();
 }
 
 /* ── PATTERN detector ── */
@@ -2665,7 +2672,7 @@ function buildPatternCard(tag, entries) {
             <div class="pattern-samples">${samples}</div>
         </div>
         <div class="pattern-actions">
-            <button class="pattern-dismiss" onclick="dismissPattern('${escHtml(tag)}');renderFeed();">DISMISS PATTERN</button>
+            <button class="pattern-dismiss" onclick="dismissPattern('${escHtml(tag)}');">DISMISS</button>
         </div>
     </div>`;
 }
@@ -2726,8 +2733,7 @@ function buildReflectionCard(e) {
             <button class="reflection-btn yes"  onclick="resolveReflection('${e.id}','YES')">YES</button>
             <button class="reflection-btn no"   onclick="resolveReflection('${e.id}','NO')">NO</button>
             <button class="reflection-btn note" onclick="toggleReflectionNote('${e.id}')">+ NOTE</button>
-            <button class="reflection-btn skip" onclick="resolveReflection('${e.id}','SKIP')">SKIP</button>
-        </div>
+            </div>
     </div>`;
 }
 
@@ -2766,7 +2772,6 @@ function resolveReflection(entryId, response) {
         if (response === "NO") e.resolved = true;
     }
     save();
-    renderFeed();
 }
 
 /* ── TAG_SUGGESTER ── */
@@ -3041,28 +3046,23 @@ function saveEntry() {
     ARCHIVE.entries.unshift(entry);
     save();
 
-    // Insert new card to top of deck immediately
-    var newCards = [{ html: buildCard(entry), id: entry.id }];
+    // Show new entry immediately in display
+    var newHtml = buildCard(entry);
     if (entry.mainTag && !entry.suggesterSeen) {
         var sc = buildSuggesterCard(entry);
-        if (sc) newCards.push({ html: sc, id: "sug_" + entry.id });
+        if (sc) newHtml += sc;
     }
-    for (var ni = newCards.length - 1; ni >= 0; ni--) _deck.unshift(newCards[ni]);
-    while (_deck.length > DECK_SIZE + 2) _deck.pop();
-    renderDeck(false);
+    _currentCard = { html: newHtml, id: entry.id };
+    var dEl = document.getElementById("card-display");
+    if (dEl) { dEl.innerHTML = _currentCard.html; dEl.style.transform = ""; }
     updateCount();
+    loadQueue();
 
     // Reset bar
     input.value = "";
     input.style.height = "auto";
     document.getElementById("sel-maintag").value = "";
-    document.getElementById("sel-type").value   = "";
-    document.getElementById("sel-stat").value   = "";
-    document.getElementById("sel-stakes").value  = "";
-    document.getElementById("sel-deadline").value = "";
-    document.getElementById("sel-deadline").style.display = "none";
     document.querySelectorAll(".capture-select").forEach(s => s.classList.remove("has-value"));
-    document.getElementById("sel-stakes").style.display = "none";
     document.getElementById("capture-send").disabled = true;
 
     renderFeed();
